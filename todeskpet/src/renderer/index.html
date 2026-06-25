@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Table Pet</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./petInteractions.css" />
+    <link rel="stylesheet" href="./settingsLayout.css" />
+    <link rel="stylesheet" href="./notificationUi.css" />
+    <link rel="stylesheet" href="./achievementUi.css" />
+    <link rel="stylesheet" href="./pomodoroUi.css" />
+  </head>
+  <body>
+    <main class="pet-shell" aria-label="智能桌面精灵">
+      <header class="titlebar">
+        <div class="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="emotionLabel">平静</span>
+          <span id="petStateSummary" class="pet-state-summary">普通 · 亲密 50 · 精力 70</span>
+          <span id="voiceStatusText" class="voice-status">语音空闲</span>
+        </div>
+        <div class="window-actions">
+          <button id="stopVoiceButton" class="icon-button" type="button" title="中断语音" disabled>■</button>
+          <button id="replayVoiceButton" class="icon-button" type="button" title="重播语音" disabled>↻</button>
+          <button id="settingsButton" class="icon-button" title="设置">⚙</button>
+        </div>
+      </header>
+
+      <section class="portrait-zone" aria-live="polite">
+        <div id="portrait" class="portrait neutral" aria-label="动态立绘">
+          <img id="customPortraitImage" class="custom-portrait-image" alt="" />
+        </div>
+      </section>
+
+      <nav id="petContextMenu" class="pet-context-menu" hidden aria-label="桌宠快捷菜单">
+        <button type="button" data-pet-action="chat">打开聊天</button>
+        <button type="button" data-pet-action="random">随机一句</button>
+        <button type="button" data-pet-action="touch">摸头</button>
+        <button type="button" data-pet-action="close-chat">关闭聊天</button>
+        <button type="button" data-pet-action="pin">置顶切换</button>
+        <button type="button" data-pet-action="rest">休息</button>
+        <button type="button" data-pet-action="debug">调试面板</button>
+        <button type="button" data-pet-action="settings">设置图片</button>
+        <button type="button" data-pet-action="hide">最小化</button>
+      </nav>
+
+      <section class="bubble" id="replyBubble">
+        <p id="replyText">[Emotion: Happy]<br />我已经醒啦。有什么想聊的，或者要我帮你看看屏幕内容，都可以直接说。</p>
+      </section>
+
+      <section class="composer">
+        <textarea id="screenContext" rows="2" placeholder="可选：粘贴屏幕文字/报错/上下文"></textarea>
+        <div class="input-row">
+          <input id="messageInput" autocomplete="off" placeholder="和她说点什么..." />
+          <button id="sendButton">发送</button>
+        </div>
+      </section>
+
+      <dialog id="settingsDialog" class="settings-dialog">
+        <form id="settingsForm" method="dialog">
+          <div class="settings-head">
+            <div>
+              <h2>设置</h2>
+              <p id="apiKeyState">正在读取配置...</p>
+            </div>
+            <button id="closeSettingsButton" class="icon-button" type="button" title="关闭">×</button>
+          </div>
+
+          <section class="settings-section">
+            <div class="settings-divider">基础</div>
+            <label><span>API 供应商</span><select id="providerSelect" name="provider"><option value="deepseek">DeepSeek</option><option value="siliconflow">硅基流动</option></select></label>
+            <label><span>模型</span><input id="modelInput" name="model" list="modelSuggestions" placeholder="选择或输入模型名" /><datalist id="modelSuggestions"></datalist></label>
+            <label><span>角色</span><select id="characterSelect" name="activeCharacterId"></select></label>
+            <div class="settings-options"><label class="checkbox-row"><input id="voiceEnabledInput" name="voiceEnabled" type="checkbox" /><span>语音播报</span></label><label class="checkbox-row"><input id="autoLaunchInput" name="autoLaunch" type="checkbox" /><span>随系统启动</span></label></div>
+            <div class="scale-row"><span>窗口缩放</span><input id="petScaleInput" name="petScale" type="range" min="0.7" max="1.5" step="0.05" /><span id="scaleValueText">100%</span></div>
+          </section>
+
+          <details class="settings-section"><summary>桌宠状态</summary><div class="pet-state-panel"><label><span>心情</span><select id="petMoodSelect"><option value="开心">开心</option><option value="普通">普通</option><option value="疲惫">疲惫</option><option value="生气">生气</option></select></label><label class="state-range-row"><span>亲密度 <b id="intimacyValueText">50</b></span><input id="intimacyInput" type="range" min="0" max="100" step="1" /></label><label class="state-range-row"><span>精力 <b id="energyValueText">70</b></span><input id="energyInput" type="range" min="0" max="100" step="1" /></label><div class="state-actions"><button id="savePetStateButton" type="button">保存状态</button><button id="resetPetStateButton" type="button">重置</button></div><p class="state-hint">状态会保存到本地，并注入下一次聊天，让回复风格跟随当前状态。</p><div class="background-link-panel"><label class="check-row"><input id="backgroundEnabledInput" type="checkbox" /><span>启用时间/天气背景</span></label><label class="check-row"><input id="backgroundMoodLinkInput" type="checkbox" /><span>让背景影响心情和精力</span></label><label class="check-row"><input id="backgroundWeatherInput" type="checkbox" /><span>启用天气</span></label><label><span>天气城市</span><input id="backgroundCityInput" type="text" placeholder="Singapore / Tokyo / Frankfurt" /></label><div class="state-actions"><button id="saveBackgroundButton" type="button">保存背景联动</button><button id="refreshBackgroundButton" type="button">刷新背景</button></div><p id="backgroundStatePreview" class="state-hint">背景状态未刷新。</p></div></div></details>
+
+          <details class="settings-section"><summary>立绘图片</summary><div class="portrait-settings-panel"><p class="state-hint">给不同心情和互动状态放入图片。未设置的状态会自动沿用最接近的心情立绘。</p><div class="portrait-picker-head"><strong>心情立绘</strong><span>AI 回复和状态变化时使用</span></div><div id="moodPortraitList" class="portrait-picker-list"></div><div class="portrait-picker-head"><strong>互动立绘</strong><span>点击、拖动、贴边、坐下时优先使用</span></div><div id="interactionPortraitList" class="portrait-picker-list"></div></div></details>
+
+          <details class="settings-section"><summary>AI 日程表</summary><div class="schedule-panel"><label class="check-row"><input id="aiScheduleEnabledInput" type="checkbox" /><span>启用 AI 日程背景</span></label><label class="check-row"><input id="aiScheduleAutoAdjustInput" type="checkbox" /><span>允许 AI 根据对话自动调整日程</span></label><label class="check-row"><input id="proactiveEnabledInput" type="checkbox" /><span>启用主动提醒</span></label><label class="check-row"><input id="proactiveVoiceInput" type="checkbox" /><span>主动提醒也朗读</span></label><label class="check-row"><input id="moodAnimationInput" type="checkbox" /><span>启用情绪动画</span></label><label><span>提醒检查间隔（分钟）</span><input id="proactiveIntervalInput" type="number" min="1" max="60" step="1" /></label><div id="scheduleCurrentText" class="state-hint">当前日程未加载。</div><div class="schedule-editor-head"><span>日程 JSON</span><button id="refreshScheduleButton" type="button">刷新</button></div><textarea id="aiScheduleJsonInput" rows="9" spellcheck="false"></textarea><div class="state-actions"><button id="saveScheduleButton" type="button">保存日程</button><button id="resetScheduleButton" type="button">恢复默认</button></div><p class="state-hint">每条格式：start/end 为 HH:MM，activity 是她正在做的事，moodHint 会影响语气，energyDelta 会影响精力感。</p></div></details>
+
+          <details class="settings-section"><summary>记忆管理</summary><div class="memory-toolbar"><input id="memorySearchInput" type="search" placeholder="搜索记忆" /><button id="refreshMemoryButton" type="button">刷新</button></div><div class="compact-grid"><label><span>记忆类型</span><select id="memoryTypeSelect"><option value="profile">用户画像</option><option value="summary">摘要</option><option value="dialogue">对话</option></select></label><label><span>分区</span><select id="memoryCategorySelect"><option value="project">项目</option><option value="life">生活</option><option value="preference">偏好</option></select></label></div><div class="compact-grid"><label><span>标签</span><input id="memoryTagsInput" placeholder="逗号分隔，例如 项目,语音" /></label><label class="checkbox-row memory-pin-row"><input id="memoryPinnedInput" type="checkbox" /><span>固定</span></label><label class="checkbox-row memory-pin-row"><input id="memorySensitiveInput" type="checkbox" /><span>敏感</span></label></div><textarea id="memoryContentInput" rows="3" placeholder="手动添加一条长期记忆"></textarea><div class="memory-actions"><button id="addMemoryButton" type="button">添加</button><button id="evolveMemoryButton" type="button">演化清理</button><button id="organizeMemoryButton" type="button">LLM 整理</button><button id="exportMemoryButton" type="button">导出</button><button id="importMemoryButton" type="button">导入</button><button id="clearSensitiveMemoryButton" type="button">清理敏感</button><button id="clearMemoryButton" type="button">清空</button></div><div id="memoryStatsText" class="memory-stats">记忆未加载</div><div id="memoryList" class="memory-list" aria-live="polite"></div></details>
+
+          <details class="settings-section"><summary>语音服务</summary><label><span>TTS 来源</span><select id="ttsProviderSelect" name="ttsProvider"><option value="local">本地微调模型</option><option value="siliconflow">硅基流动 API</option></select></label><span id="siliconflowTtsConfigText" class="service-status">SiliconFlow: .env</span><div class="file-pick-row"><button id="selectSovitsDirButton" type="button">部署目录</button><span id="sovitsDirText">未选择</span></div><div class="compact-grid"><label><span>Python 命令</span><input id="sovitsPythonInput" name="sovitsPython" placeholder="python 或 venv\\Scripts\\python.exe" /></label><label><span>API 脚本</span><input id="sovitsApiScriptInput" name="sovitsApiScript" placeholder="api_v2.py" /></label></div><label><span>服务地址</span><input id="sovitsUrlInput" name="sovitsUrl" placeholder="例如 http://127.0.0.1:9880/tts" /></label><label><span>本地模型路径</span><input id="qwenTtsModelPathInput" name="qwenTtsModelPath" placeholder="checkpoint-step-1200 路径" /></label><label><span>合成模式</span><select id="qwenTtsModeSelect" name="qwenTtsMode"><option value="custom">CustomVoice / 内置音色</option><option value="clone">Voice Clone / 参考音频克隆</option></select></label><div class="compact-grid"><label><span>说话人</span><input id="qwenTtsSpeakerInput" name="qwenTtsSpeaker" placeholder="my_voice" /></label><label><span>播报语言</span><select id="qwenTtsLanguageInput" name="qwenTtsLanguage"><option value="Japanese">Japanese</option></select></label></div><div class="file-pick-row"><button id="selectSovitsReferenceAudioButton" type="button">参考音频</button><span id="sovitsRefAudioText">未选择</span></div><label><span>参考原文</span><textarea id="sovitsPromptTextInput" name="sovitsPromptText" rows="2" placeholder="参考音频里的原文"></textarea></label><label class="checkbox-row"><input id="qwenTtsCloneZeroShotInput" name="qwenTtsCloneZeroShot" type="checkbox" /><span>克隆 Zero-shot</span></label><div class="compact-grid"><label><span>生成长度</span><input id="qwenTtsMaxTokensInput" name="qwenTtsMaxNewTokens" type="number" min="16" max="2048" step="16" /></label><div class="service-row compact-service"><button id="startSovitsButton" type="button">启动</button><button id="stopSovitsButton" type="button">停止</button><button id="testVoiceButton" type="button">测试语音</button></div></div><span id="sovitsStatusText" class="service-status">未启动</span><div class="voice-diagnostics" aria-live="polite"><div class="voice-diagnostics-header"><strong>语音诊断</strong><button id="refreshVoiceDiagnosticsButton" type="button">刷新诊断</button></div><div class="diagnostic-grid"><span>服务</span><b id="voiceDiagServiceText">未检查</b><span>Health</span><b id="voiceDiagHealthText">未检查</b><span>配置</span><b id="voiceDiagConfigText">未加载</b><span>阶段</span><b id="voiceDiagStageText">未开始</b><span>最近错误</span><b id="voiceDiagErrorText">暂无</b></div><pre id="voiceDiagRawText" class="diagnostic-raw">暂无诊断详情</pre></div></details>
+
+          <details class="settings-section"><summary>高级设定</summary><label><span>桌面精灵提示词</span><textarea id="promptInput" name="systemPrompt" rows="10"></textarea></label></details>
+
+          <div class="settings-meta"><span id="baseUrlText"></span><span id="ttsUrlText"></span></div>
+          <div class="settings-actions"><button id="resetPromptButton" type="button">重置提示词</button><button id="saveSettingsButton" type="submit">保存</button></div>
+        </form>
+      </dialog>
+    </main>
+    <script src="./notificationUi.js"></script><script src="./errorBoundary.js"></script><script src="./achievementUi.js"></script><script src="./pomodoroUi.js"></script><script src="./settingsUi.js"></script><script src="./ttsState.js"></script><script src="./portraitNotifications.js"></script><script src="./app.js"></script><script src="./chatErrorGuard.js"></script><script src="./longPressDrag.js"></script><script src="./petInteractions.js"></script><script src="./petStatus.js"></script><script src="./aiSchedule.js"></script><script src="./proactive.js"></script><script src="./moodEffects.js"></script><script src="./memoryOrganizer.js"></script><script src="./voiceTest.js"></script><script src="./voiceDiagnostics.js"></script>
+  </body>
+</html>

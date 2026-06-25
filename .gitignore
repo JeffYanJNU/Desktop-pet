@@ -1,0 +1,79 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+dist/
+out/
+build/
+*.egg-info/
+
+*.log
+*.err.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+*.cache
+tmp/
+temp/
+.tmp/
+.temp/
+.pytest_cache/
+.cache/
+.hf_cache/
+cache/
+
+# Runtime state
+todeskpet/data/
+audio/logs/
+qwensteamtts/output/
+
+# Projects not included in this repository
+llmapi/
+GALskill/
+Arcueid_aru/
+
+# TTS: upload source code/config/docs, not models, checkpoints, generated audio, or caches
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.onnx.data
+*.gguf
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.ogg
+*.npy
+*.npz
+
+# Qwen / TTS model directories and training artifacts
+audio/Qwen3-TTS-*/
+audio/finetuning/output*/
+audio/finetuning/data/
+qwensteamtts/checkpoint-*/
+qwensteamtts/model-*/
+qwensteamtts/output/
+qwensteamtts/log/
+
+# Keep code dirs uploadable if this root becomes the Git repo:
+# audio/qwen_tts/, audio/scripts/, audio/examples/, audio/finetuning/*.py, audio/pyproject.toml, audio/README.md
+
+# Large external/reference trees
+qwensteamtts/ref/
+qwensteamtts/Qwen3-TTS-main/
+
+.DS_Store
+.idea/
+.vscode/

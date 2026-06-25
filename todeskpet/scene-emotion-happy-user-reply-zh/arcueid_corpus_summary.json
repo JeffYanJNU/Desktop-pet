@@ -1,0 +1,81 @@
+{
+  "character": "爱尔奎特",
+  "source_cn": "E:\\tsukihime_base_romfs_extracted\\role_marked_chinese_corpus\\by_script_txt",
+  "source_ja": "E:\\tsukihime_base_romfs_extracted\\role_marked_corpus\\by_script_txt",
+  "total_blocks": 1460,
+  "total_examples": 48,
+  "route_counts": {
+    "Arcueid线": 954,
+    "Ciel线": 506
+  },
+  "scene_counts": {
+    "其他": 146,
+    "与志贵对话": 627,
+    "战斗/狩猎": 280,
+    "世界观说明": 16,
+    "受伤/脆弱": 34,
+    "暴走/吸血冲动": 190,
+    "命令/保护": 48,
+    "争执/吃醋": 76,
+    "亲密/告白": 19,
+    "日常闲聊": 24
+  },
+  "emotion_counts": {
+    "Neutral": 629,
+    "Cold": 140,
+    "Playful": 343,
+    "Calm": 10,
+    "Determined": 11,
+    "Pain": 20,
+    "Happy": 80,
+    "Dangerous": 190,
+    "Angry": 26,
+    "Tender": 11
+  },
+  "top_speaking_to": [
+    [
+      "远野志贵",
+      1111
+    ],
+    [
+      "不明",
+      117
+    ],
+    [
+      "话者不明",
+      116
+    ],
+    [
+      "希耶尔",
+      64
+    ],
+    [
+      "马里奥",
+      23
+    ],
+    [
+      "弗洛夫",
+      12
+    ],
+    [
+      "罗亚",
+      7
+    ],
+    [
+      "诺艾尔",
+      6
+    ],
+    [
+      "远野秋叶",
+      2
+    ],
+    [
+      "幼年志贵",
+      1
+    ],
+    [
+      "苍崎青子",
+      1
+    ]
+  ]
+}
