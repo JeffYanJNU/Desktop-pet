@@ -82,6 +82,14 @@ const EMOTION_CLASS = {
   Encouraging: "encouraging"
 };
 
+const DEFAULT_MOOD_PORTRAIT_URLS = {
+  Confused: "../../data/portraits/Confused-1779283186490.png",
+  Thinking: "../../data/portraits/Thinking-1779283194215.png",
+  Neutral: "../../data/portraits/Neutral-1779283203880.png",
+  Happy: "../../data/portraits/Happy-1779283213858.png",
+  Encouraging: "../../data/portraits/Encouraging-1779283265023.png"
+};
+
 const MODEL_SUGGESTIONS = {
   deepseek: ["deepseek-chat", "deepseek-reasoner"],
   siliconflow: [
@@ -125,7 +133,7 @@ let currentEmotion = "Happy";
 let mood = "Neutral";
 let moodLabelText = "平静";
 let moodScore = 60;
-let moodPortraitUrls = {};
+let moodPortraitUrls = { ...DEFAULT_MOOD_PORTRAIT_URLS };
 let sovitsDir = "";
 let sovitsRefAudioPath = "";
 let providerOptions = [];
@@ -176,6 +184,13 @@ function nearestMoodPortraitUrl(activeMood) {
   return "";
 }
 
+function mergeMoodPortraitUrls(urls = {}) {
+  return {
+    ...DEFAULT_MOOD_PORTRAIT_URLS,
+    ...Object.fromEntries(Object.entries(urls).filter(([, url]) => Boolean(url)))
+  };
+}
+
 function setMood(nextMood, nextScore, nextLabel) {
   mood = EMOTION_CLASS[nextMood] ? nextMood : "Neutral";
   moodScore = Number.isFinite(Number(nextScore)) ? Number(nextScore) : moodScore;
@@ -202,7 +217,7 @@ function renderPortraitClass() {
 
   if (moodPortraitUrl) {
     customPortraitImage.src = moodPortraitUrl;
-  } else {
+  } else if (!customPortraitImage.getAttribute("src")) {
     customPortraitImage.removeAttribute("src");
   }
 }
@@ -571,7 +586,7 @@ function applySettings(settings) {
   updateSovitsStatus(settings.sovitsStatus);
 
   promptInput.value = settings.systemPrompt || DEFAULT_SYSTEM_PROMPT;
-  moodPortraitUrls = settings.moodPortraitUrls || {};
+  moodPortraitUrls = mergeMoodPortraitUrls(settings.moodPortraitUrls);
   setMood(settings.mood || "Neutral", settings.moodScore ?? 60, settings.moodLabel || "平静");
 
   apiKeyState.textContent = settings.hasApiKey
@@ -842,7 +857,11 @@ qwenTtsLanguageInput.addEventListener("change", () => {
 startSovitsButton.addEventListener("click", startSovits);
 stopSovitsButton.addEventListener("click", stopSovits);
 
-loadSettings();
+loadSettings().catch((error) => {
+  console.error("Failed to load settings", error);
+  moodPortraitUrls = mergeMoodPortraitUrls();
+  renderPortraitClass();
+});
 applyChatVisibility(false);
 window.tablePet.onChatVisibilityChanged((visible) => applyChatVisibility(visible));
 setMood("Neutral", 60, "平静");

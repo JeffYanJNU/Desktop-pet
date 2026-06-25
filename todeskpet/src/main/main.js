@@ -1441,6 +1441,36 @@ function createWindow() {
   applyAutoLaunch(readSettings().autoLaunch);
 
   mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+  if (process.env.TABLEPET_DIAG_RENDERER === "1") {
+    mainWindow.webContents.once("did-finish-load", () => {
+      setTimeout(async () => {
+        try {
+          const state = await mainWindow.webContents.executeJavaScript(`(() => {
+            const img = document.querySelector("#customPortraitImage");
+            const portrait = document.querySelector("#portrait");
+            const rect = portrait ? portrait.getBoundingClientRect() : null;
+            return {
+              bodyClass: document.body.className,
+              portraitClass: portrait?.className || null,
+              portraitRect: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null,
+              imgSrc: img?.getAttribute("src") || "",
+              imgCurrentSrc: img?.currentSrc || "",
+              imgNaturalWidth: img?.naturalWidth || 0,
+              imgNaturalHeight: img?.naturalHeight || 0,
+              imgComplete: img?.complete || false
+            };
+          })()`, true);
+          console.log(`TABLEPET_DIAG ${JSON.stringify(state)}`);
+          const image = await mainWindow.webContents.capturePage();
+          const capturePath = path.join(app.getAppPath(), "tablepet-renderer-capture.png");
+          fs.writeFileSync(capturePath, image.toPNG());
+          console.log(`TABLEPET_DIAG_CAPTURE ${capturePath}`);
+        } catch (error) {
+          console.error("TABLEPET_DIAG_FAILED", error);
+        }
+      }, 2500);
+    });
+  }
   mainWindow.once("ready-to-show", () => applyWindowLayout(false));
   mainWindow.on("blur", () => {
     if (chatVisible) applyWindowLayout(false);
@@ -2702,6 +2732,7 @@ ipcMain.handle("app:openExternal", (_event, url) => {
   shell.openExternal(parsed.toString());
 });
 
+app.disableHardwareAcceleration();
 loadEnvFile();
 
 app.whenReady().then(() => {

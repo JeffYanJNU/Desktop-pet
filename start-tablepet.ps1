@@ -1,11 +1,11 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$appDir = Join-Path $root "tablePet"
+$appDir = Join-Path $root "todeskpet"
 
 if (-not (Test-Path (Join-Path $appDir ".env")) -and (Test-Path (Join-Path $appDir ".env.example"))) {
   Copy-Item (Join-Path $appDir ".env.example") (Join-Path $appDir ".env")
-  Write-Host "Created tablePet\.env from .env.example. Fill API keys before cloud model calls."
+  Write-Host "Created todeskpet\.env from .env.example. Fill API keys before cloud model calls."
 }
 
 Push-Location $appDir
