@@ -1272,7 +1272,8 @@ async function getSovitsRuntimeStatus() {
     mode: normalizeQwenTtsMode(settings.qwenTtsMode),
     language: normalizeQwenTtsLanguage(settings.qwenTtsLanguage),
     speaker: settings.qwenTtsSpeaker || "my_voice",
-    modelPath: settings.qwenTtsModelPath || ""
+    modelPath: settings.qwenTtsModelPath || "",
+    siliconflowModel: settings.siliconflowTtsModel || ""
   };
   if (!status.running || !settings.sovitsUrl) return status;
 

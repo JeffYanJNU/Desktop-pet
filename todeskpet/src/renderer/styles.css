@@ -85,6 +85,7 @@ body.chat-collapsed .composer {
   font-size: 13px;
   color: var(--muted);
   min-width: 0;
+  flex: 1;
 }
 
 .status-dot {
@@ -104,17 +105,19 @@ body.chat-collapsed .composer {
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex-shrink: 1;
 }
 
 .pet-state-summary {
-  max-width: 150px;
+  max-width: 220px;
   padding: 3px 8px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.36);
+  flex-shrink: 2;
 }
 
 .voice-status {
-  max-width: 130px;
+  max-width: 320px;
 }
 
 .window-actions {
@@ -1122,4 +1125,100 @@ body.proactive-pulse .bubble {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* Click Ripple Effect */
+.click-ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  background: rgba(255, 255, 255, 0.42);
+  pointer-events: none;
+  animation: ripple-animation 0.5s ease-out;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Button Shine Sweep Effect */
+#sendButton,
+#saveSettingsButton,
+#addMemoryButton,
+#startSovitsButton,
+#saveScheduleButton,
+.shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+#sendButton::after,
+#saveSettingsButton::after,
+#addMemoryButton::after,
+#startSovitsButton::after,
+#saveScheduleButton::after,
+.shine-effect::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: left 0.65s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+#sendButton:hover::after,
+#saveSettingsButton:hover::after,
+#addMemoryButton:hover::after,
+#startSovitsButton:hover::after,
+#saveScheduleButton:hover::after,
+.shine-effect:hover::after {
+  left: 150%;
+}
+
+/* Skeleton Shimmer Loading */
+.memory-skeleton {
+  min-height: 80px;
+  border-radius: 12px;
+  border: 1px dashed rgba(117, 55, 86, 0.08);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.4) 25%,
+    rgba(255, 226, 239, 0.3) 37%,
+    rgba(255, 255, 255, 0.4) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer-animation 1.4s ease infinite;
+}
+
+@keyframes shimmer-animation {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Enhanced Glassmorphism & Hover Glow */
+.memory-item,
+.portrait-picker-item {
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.25s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.25s ease;
+}
+
+.memory-item:hover,
+.portrait-picker-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(217, 79, 139, 0.32);
+  box-shadow: 0 8px 20px rgba(92, 38, 66, 0.06);
 }

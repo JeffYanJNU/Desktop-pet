@@ -55,6 +55,49 @@ body.settings-open .pet-context-menu {
   height: 38px !important;
   text-align: left;
   border-radius: 14px !important;
+  position: relative !important;
+  transition: background-color 0.22s ease, transform 0.15s ease, padding-left 0.22s ease !important;
+  padding-left: 14px !important;
+  border: 0;
+  cursor: pointer;
+  color: var(--muted);
+  background: transparent;
+}
+
+.settings-tabs button::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 25%;
+  height: 50%;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 99px;
+  transform: scaleY(0);
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+  transform-origin: center;
+}
+
+.settings-tabs button.active {
+  color: var(--accent-strong);
+  font-weight: 700;
+  background: rgba(255, 226, 239, 0.48) !important;
+  padding-left: 18px !important;
+}
+
+.settings-tabs button:hover {
+  background: rgba(255, 226, 239, 0.28);
+  color: var(--ink);
+  padding-left: 18px !important;
+}
+
+.settings-tabs button.active::before,
+.settings-tabs button:hover::before {
+  transform: scaleY(1);
+}
+
+.settings-tabs button:active {
+  transform: scale(0.97);
 }
 
 .settings-dialog .settings-section {

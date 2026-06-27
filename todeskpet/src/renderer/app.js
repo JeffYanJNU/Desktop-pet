@@ -351,6 +351,9 @@ function renderMemory(snapshot) {
 }
 
 async function loadMemory(query = memorySearchInput.value.trim()) {
+  memoryList.innerHTML = Array(3)
+    .fill('<div class="memory-skeleton"></div>')
+    .join("");
   const snapshot = query
     ? await window.tablePet.searchMemory(query)
     : await window.tablePet.getMemory();
@@ -362,14 +365,14 @@ function updateSovitsStatus(status) {
     sovitsStatusText.textContent = "SiliconFlow API";
     startSovitsButton.disabled = true;
     stopSovitsButton.disabled = true;
-    updateVoiceStatus(status?.tts);
+    updateVoiceStatus(status?.tts, status?.config);
     return;
   }
   const running = Boolean(status?.running);
   sovitsStatusText.textContent = running ? `运行中 PID ${status.pid}` : "未启动";
   startSovitsButton.disabled = running;
   stopSovitsButton.disabled = !running;
-  updateVoiceStatus(status?.tts);
+  updateVoiceStatus(status?.tts, status?.config);
 }
 
 function setReplayAvailable(available) {
@@ -394,11 +397,22 @@ function voiceStageLabel(stage) {
   }[stage] || "语音处理中";
 }
 
-function updateVoiceStatus(tts) {
+function updateVoiceStatus(tts, config = null) {
   const stage = tts?.stage || (voiceBusy ? "generating" : "idle");
   const elapsed = formatElapsed(tts?.elapsedSeconds);
   const chars = Number(tts?.textChars || 0);
   const parts = [voiceStageLabel(stage)];
+  if (config && stage !== "idle") {
+    let modelName = "";
+    if (config.provider === "siliconflow") {
+      modelName = config.siliconflowModel ? config.siliconflowModel.split("/").pop() : "SiliconFlow";
+    } else if (config.modelPath) {
+      modelName = config.modelPath.split(/[\\/]/).filter(Boolean).pop();
+    }
+    if (modelName) {
+      parts.push(modelName);
+    }
+  }
   if (elapsed && stage !== "idle") parts.push(elapsed);
   if (chars && stage !== "idle") parts.push(`${chars}字`);
   voiceStatusText.textContent = parts.join(" · ");
@@ -866,3 +880,58 @@ applyChatVisibility(false);
 window.tablePet.onChatVisibilityChanged((visible) => applyChatVisibility(visible));
 setMood("Neutral", 60, "平静");
 setReplayAvailable(false);
+
+// Initialize global click ripple feedback
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("button, select, [role='button'], .settings-tabs button");
+  if (!button || button.disabled) return;
+
+  const rect = button.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  const ripple = document.createElement("span");
+  ripple.className = "click-ripple";
+
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = `${size}px`;
+  ripple.style.left = `${x - size / 2}px`;
+  ripple.style.top = `${y - size / 2}px`;
+
+  const prevPosition = button.style.position;
+  const prevOverflow = button.style.overflow;
+
+  if (!prevPosition || prevPosition === "static") {
+    button.style.position = "relative";
+  }
+  button.style.overflow = "hidden";
+
+  button.appendChild(ripple);
+
+  ripple.addEventListener("animationend", () => {
+    ripple.remove();
+    if (!prevPosition) button.style.position = prevPosition;
+    if (!prevOverflow) button.style.overflow = prevOverflow;
+  }, { once: true });
+});
+
+// Initialize magnetic button effect
+function makeMagnetic(element, strength = 0.35) {
+  if (!element) return;
+  element.addEventListener("mousemove", (event) => {
+    const rect = element.getBoundingClientRect();
+    const x = event.clientX - rect.left - rect.width / 2;
+    const y = event.clientY - rect.top - rect.height / 2;
+    element.style.transform = `translate(${x * strength}px, ${y * strength}px) scale(1.05)`;
+    element.style.transition = "transform 0.08s ease-out";
+  });
+  element.addEventListener("mouseleave", () => {
+    element.style.transform = "";
+    element.style.transition = "transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)";
+  });
+}
+
+// Bind magnetic effects to controls in titlebar
+makeMagnetic(settingsButton);
+makeMagnetic(stopVoiceButton);
+makeMagnetic(replayVoiceButton);
