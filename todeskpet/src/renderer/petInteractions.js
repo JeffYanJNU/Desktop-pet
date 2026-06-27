@@ -386,8 +386,18 @@
     event.stopImmediatePropagation();
     markUserInteraction();
 
-    const x = Math.min(event.clientX, window.innerWidth - 154);
-    const y = Math.min(event.clientY, window.innerHeight - 288);
+    const isChatOpen = document.body.classList.contains("chat-visible");
+    const chatBtn = petContextMenu.querySelector("button[data-pet-action='chat']");
+    const closeChatBtn = petContextMenu.querySelector("button[data-pet-action='close-chat']");
+    if (chatBtn) {
+      chatBtn.style.display = isChatOpen ? "none" : "block";
+    }
+    if (closeChatBtn) {
+      closeChatBtn.style.display = isChatOpen ? "block" : "none";
+    }
+
+    const x = Math.min(event.clientX, window.innerWidth - 146);
+    const y = Math.min(event.clientY, window.innerHeight - 190);
     petContextMenu.style.left = `${Math.max(8, x)}px`;
     petContextMenu.style.top = `${Math.max(8, y)}px`;
     petContextMenu.hidden = false;
