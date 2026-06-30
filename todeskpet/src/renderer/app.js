@@ -139,6 +139,7 @@ let sovitsRefAudioPath = "";
 let providerOptions = [];
 let voiceEnabled = true;
 let ttsProvider = "local";
+let projectRoot = "";
 let currentAudio = null;
 let lastAudioSrc = "";
 let lastSpokenText = "";
@@ -149,6 +150,28 @@ let autoLaunch = false;
 let petScale = 1;
 let chatVisible = false;
 let qwenTtsLanguage = "Japanese";
+
+const bootReadySteps = window.__tablePetBootReadySteps || new Set();
+window.__tablePetBootReadySteps = bootReadySteps;
+
+function revealPortraitAfterBoot() {
+  if (!document.body.classList.contains("pet-booting")) return;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.body.classList.remove("pet-booting");
+    });
+  });
+}
+
+function markBootReady(step) {
+  bootReadySteps.add(step);
+  if (step === "fallback" || (bootReadySteps.has("app-settings") && bootReadySteps.has("interactions"))) {
+    revealPortraitAfterBoot();
+  }
+}
+
+window.__tablePetMarkBootReady = markBootReady;
+window.setTimeout(() => markBootReady("fallback"), 1800);
 
 function setEmotion(emotion) {
   currentEmotion = EMOTION_CLASS[emotion] ? emotion : "Neutral";
@@ -419,9 +442,13 @@ function updateVoiceStatus(tts, config = null) {
   stopVoiceButton.disabled = !voiceBusy && !["requesting", "loading_model", "generating", "encoding", "receiving"].includes(stage);
 }
 
+let isRecording = false;
+let isTranscribing = false;
+
 function startVoiceStatusPolling() {
   if (voiceStatusTimer) return;
   voiceStatusTimer = setInterval(async () => {
+    if (isRecording || isTranscribing) return;
     try {
       updateSovitsStatus(await window.tablePet.getSovitsStatus());
     } catch {
@@ -554,6 +581,7 @@ async function loadSettings() {
 }
 
 function applySettings(settings) {
+  projectRoot = settings.projectRoot || "";
   providerOptions = settings.providers || [];
   providerSelect.value = settings.provider || "deepseek";
   renderModelSuggestions(providerSelect.value);
@@ -863,6 +891,18 @@ selectSovitsDirButton.addEventListener("click", selectSovitsDir);
 selectSovitsReferenceAudioButton.addEventListener("click", selectSovitsReferenceAudio);
 ttsProviderSelect?.addEventListener("change", () => {
   ttsProvider = ttsProviderSelect.value;
+  if (projectRoot) {
+    if (ttsProvider === "local") {
+      sovitsDir = projectRoot + "\\audio";
+      sovitsApiScriptInput.value = "scripts\\qwen_tts_api.py";
+      qwenTtsModeSelect.value = "custom";
+    } else if (ttsProvider === "streaming") {
+      sovitsDir = projectRoot + "\\qwensteamtts";
+      sovitsApiScriptInput.value = "qwen_tts_gguf_api.py";
+      qwenTtsModeSelect.value = "clone";
+    }
+    sovitsDirText.textContent = compactPathLabel(sovitsDir, "未选择");
+  }
   updateSovitsStatus({ running: false, tts: { stage: "idle" } });
 });
 qwenTtsLanguageInput.addEventListener("change", () => {
@@ -871,14 +911,16 @@ qwenTtsLanguageInput.addEventListener("change", () => {
 startSovitsButton.addEventListener("click", startSovits);
 stopSovitsButton.addEventListener("click", stopSovits);
 
-loadSettings().catch((error) => {
-  console.error("Failed to load settings", error);
-  moodPortraitUrls = mergeMoodPortraitUrls();
-  renderPortraitClass();
-});
+loadSettings()
+  .then(() => markBootReady("app-settings"))
+  .catch((error) => {
+    console.error("Failed to load settings", error);
+    moodPortraitUrls = mergeMoodPortraitUrls();
+    renderPortraitClass();
+    markBootReady("app-settings");
+  });
 applyChatVisibility(false);
 window.tablePet.onChatVisibilityChanged((visible) => applyChatVisibility(visible));
-setMood("Neutral", 60, "平静");
 setReplayAvailable(false);
 
 // Initialize global click ripple feedback
@@ -935,3 +977,142 @@ function makeMagnetic(element, strength = 0.35) {
 makeMagnetic(settingsButton);
 makeMagnetic(stopVoiceButton);
 makeMagnetic(replayVoiceButton);
+
+// ASR Recording & Transcription Logic
+const micButton = document.querySelector("#micButton");
+let mediaRecorder = null;
+let audioChunks = [];
+
+async function startRecording() {
+  if (isRecording || isTranscribing) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    
+    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+    
+    mediaRecorder.onstop = async () => {
+      isRecording = false;
+      if (micButton) micButton.classList.remove("recording");
+      
+      const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      
+      // Release hardware
+      stream.getTracks().forEach(track => track.stop());
+      
+      if (audioBlob.size < 1000) {
+        voiceStatusText.textContent = "录音过短";
+        setTimeout(() => {
+          if (!isRecording && !isTranscribing) voiceStatusText.textContent = "语音空闲";
+        }, 1200);
+        return;
+      }
+      
+      transcribeAndSend(arrayBuffer);
+    };
+    
+    isRecording = true;
+    if (micButton) micButton.classList.add("recording");
+    voiceStatusText.textContent = "🎤 正在倾听中...";
+    mediaRecorder.start();
+  } catch (error) {
+    console.error("麦克风启动失败:", error);
+    window.tablePetNotify?.error?.("麦克风启动失败，请确认已授予录音权限并连接录音设备");
+    isRecording = false;
+    if (micButton) micButton.classList.remove("recording");
+    voiceStatusText.textContent = "语音空闲";
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+  }
+}
+
+async function transcribeAndSend(arrayBuffer) {
+  isTranscribing = true;
+  voiceStatusText.textContent = "⏳ 正在分析声音...";
+  try {
+    const text = await window.tablePet.transcribeAudio(arrayBuffer);
+    isTranscribing = false;
+    
+    if (!text || !text.trim()) {
+      voiceStatusText.textContent = "🔇 未听清说话内容";
+      setTimeout(() => {
+        if (!isRecording && !isTranscribing) voiceStatusText.textContent = "语音空闲";
+      }, 1500);
+      return;
+    }
+    
+    voiceStatusText.textContent = `🗣️ "${text.slice(0, 10)}${text.length > 10 ? "..." : ""}"`;
+    
+    // Auto-open chat if closed
+    if (!chatVisible) {
+      await setChatVisible(true);
+    }
+    
+    // Fill text and trigger LLM send
+    messageInput.value = text;
+    sendMessage();
+    
+    setTimeout(() => {
+      if (!isRecording && !isTranscribing) {
+        voiceStatusText.textContent = "语音空闲";
+      }
+    }, 2000);
+  } catch (error) {
+    isTranscribing = false;
+    console.error("语音识别失败:", error);
+    window.tablePetNotify?.error?.("语音转写失败，请确保本地 Qwen3-TTS/ASR 服务已开启并且可正常连接");
+    voiceStatusText.textContent = "❌ 识别失败";
+    setTimeout(() => {
+      if (!isRecording && !isTranscribing) voiceStatusText.textContent = "语音空闲";
+    }, 1500);
+  }
+}
+
+// Click and hold event bindings on microphone button
+if (micButton) {
+  micButton.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    startRecording();
+  });
+  
+  micButton.addEventListener("pointerup", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    stopRecording();
+  });
+  
+  micButton.addEventListener("pointerleave", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isRecording) {
+      stopRecording();
+    }
+  });
+}
+
+// Global F2 push-to-talk hotkey bindings
+window.addEventListener("keydown", (event) => {
+  if (event.key === "F2" && !isRecording && !isTranscribing && !settingsDialog?.open) {
+    event.preventDefault();
+    startRecording();
+  }
+});
+
+window.addEventListener("keyup", (event) => {
+  if (event.key === "F2" && isRecording) {
+    event.preventDefault();
+    stopRecording();
+  }
+});

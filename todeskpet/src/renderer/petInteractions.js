@@ -179,7 +179,7 @@
       return;
     }
     lastRenderedSrc = src;
-    if (src.startsWith("data:") || src.startsWith("file:") || src.startsWith("blob:")) {
+    if (!src.startsWith("http") || src.startsWith("data:") || src.startsWith("file:") || src.startsWith("blob:")) {
       portraitImage.setAttribute("src", src);
       return;
     }
@@ -947,5 +947,13 @@
   setupRuntimeHooks();
   setupVoiceObserver();
   setupIdleBehavior();
-  refreshInteractionSettings().then(() => resolveState()).catch(() => resolveState());
+  refreshInteractionSettings()
+    .then(() => {
+      resolveState();
+      window.__tablePetMarkBootReady?.("interactions");
+    })
+    .catch(() => {
+      resolveState();
+      window.__tablePetMarkBootReady?.("interactions");
+    });
 })();

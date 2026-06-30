@@ -204,7 +204,7 @@ function applySettingsWindowLayout(nextSettingsVisible) {
   settingsVisible = Boolean(nextSettingsVisible);
   if (settingsVisible) {
     const bounds = clampWindowBounds(getSettingsWindowBounds(readSettings().petScale), { fullyVisible: true });
-    mainWindow.setBounds(bounds, true);
+    mainWindow.setBounds(bounds, false);
     mainWindow.webContents.setZoomFactor(clampPetScale(readSettings().petScale));
     return { settingsVisible, bounds };
   }
@@ -238,7 +238,7 @@ function applyWindowLayout(nextChatVisible = chatVisible) {
   );
 
   chatVisible = targetChatVisible;
-  mainWindow.setBounds(bounds, true);
+  mainWindow.setBounds(bounds, false);
   mainWindow.webContents.setZoomFactor(clampPetScale(settings.petScale));
   mainWindow.webContents.send("window:chatVisibility", chatVisible);
 }
@@ -266,7 +266,7 @@ function applyWindowDragMove() {
 
   const currentBounds = mainWindow.getBounds();
   if (currentBounds.x !== nextBounds.x || currentBounds.y !== nextBounds.y) {
-    mainWindow.setPosition(nextBounds.x, nextBounds.y, false);
+    mainWindow.setBounds(nextBounds, false);
   }
 
   return { ok: true, x: nextBounds.x, y: nextBounds.y };
@@ -780,7 +780,9 @@ function clampTtsMaxNewTokens(value) {
 }
 
 function normalizeTtsProvider(value) {
-  return String(value || "").toLowerCase() === "siliconflow" ? "siliconflow" : "local";
+  const norm = String(value || "").toLowerCase().trim();
+  if (norm === "streaming") return "streaming";
+  return "local";
 }
 
 function normalizeQwenTtsMode(value) {
@@ -1397,10 +1399,11 @@ function publicSettings(settings = readSettings()) {
     hasApiKey: Boolean(process.env[provider.apiKeyEnv]),
     apiKeyEnv: provider.apiKeyEnv,
     baseUrl: provider.baseUrl,
+    projectRoot: PROJECT_ROOT,
     ttsProvider: normalizeTtsProvider(settings.ttsProvider),
     ttsProviders: [
-      { id: "local", label: "Local Qwen3-TTS" },
-      { id: "siliconflow", label: "SiliconFlow API" }
+      { id: "local", label: "本地微调 (PyTorch)" },
+      { id: "streaming", label: "流式处理 (GGUF ONNX)" }
     ],
     qwenTtsModes: [
       { id: "custom", label: "CustomVoice / 内置音色" },
@@ -1418,13 +1421,15 @@ function publicSettings(settings = readSettings()) {
 }
 
 function createWindow() {
-  const bounds = getWindowBounds(false);
+  const initialSettings = readSettings();
+  const bounds = getWindowBounds(false, initialSettings.petScale);
 
   mainWindow = new BrowserWindow({
     width: bounds.width,
     height: bounds.height,
     x: bounds.x,
     y: bounds.y,
+    show: false,
     frame: false,
     transparent: true,
     resizable: true,
@@ -1439,7 +1444,7 @@ function createWindow() {
     }
   });
 
-  applyAutoLaunch(readSettings().autoLaunch);
+  applyAutoLaunch(initialSettings.autoLaunch);
 
   mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
   if (process.env.TABLEPET_DIAG_RENDERER === "1") {
@@ -1472,7 +1477,14 @@ function createWindow() {
       }, 2500);
     });
   }
-  mainWindow.once("ready-to-show", () => applyWindowLayout(false));
+  mainWindow.once("ready-to-show", () => {
+    const settings = readSettings();
+    const bounds = clampWindowBounds(getWindowBounds(false, settings.petScale));
+    mainWindow.setBounds(bounds, false);
+    mainWindow.webContents.setZoomFactor(clampPetScale(settings.petScale));
+    mainWindow.webContents.send("window:chatVisibility", false);
+    mainWindow.show();
+  });
   mainWindow.on("blur", () => {
     if (chatVisible) applyWindowLayout(false);
   });
@@ -2045,9 +2057,6 @@ function sanitizeSpeechText(text) {
 async function callSovits(text) {
   const settings = readSettings();
   if (settings.voiceEnabled === false) return { ok: false, skipped: true, reason: "voice disabled" };
-  if (normalizeTtsProvider(settings.ttsProvider) === "siliconflow") {
-    return callSiliconflowTts(text, settings);
-  }
   if (!settings.sovitsUrl) return { ok: false, skipped: true };
   const ttsMode = normalizeQwenTtsMode(settings.qwenTtsMode);
   const refAudioPath = String(settings.sovitsRefAudioPath || "").trim();
@@ -2500,6 +2509,8 @@ function startSovitsService() {
     shell: false,
     env: {
       ...process.env,
+      PYTHONIOENCODING: "utf-8",
+      KMP_DUPLICATE_LIB_OK: "TRUE",
       QWEN_TTS_MODE: normalizeQwenTtsMode(settings.qwenTtsMode),
       QWEN_TTS_MODEL: settings.qwenTtsModelPath || QWEN_TTS_MODEL_PATH,
       QWEN_TTS_SPEAKER: settings.qwenTtsSpeaker || "my_voice",
@@ -2556,7 +2567,8 @@ function stopSovitsService() {
 function autoStartLocalTtsService() {
   const settings = readSettings();
   if (settings.voiceEnabled === false || settings.autoStartTts === false) return;
-  if (normalizeTtsProvider(settings.ttsProvider) !== "local") return;
+  const provider = normalizeTtsProvider(settings.ttsProvider);
+  if (provider !== "local" && provider !== "streaming") return;
 
   const result = startSovitsService();
   if (!result.ok) {
@@ -2645,6 +2657,35 @@ ipcMain.handle("sovits:start", () => startSovitsService());
 ipcMain.handle("sovits:stop", () => stopSovitsService());
 ipcMain.handle("sovits:status", () => getSovitsRuntimeStatus());
 
+ipcMain.handle("asr:transcribe", async (_event, arrayBuffer) => {
+  try {
+    const settings = readSettings();
+    const url = new URL(settings.sovitsUrl || "http://127.0.0.1:8765/tts");
+    url.pathname = "/asr";
+    url.search = "";
+
+    const blob = new Blob([arrayBuffer], { type: "audio/webm" });
+    const formData = new FormData();
+    formData.append("file", blob, "recording.webm");
+
+    const response = await fetch(url.href, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Local ASR failed: ${response.statusText} (${errorText})`);
+    }
+
+    const result = await response.json();
+    return result.text || "";
+  } catch (error) {
+    console.error("Local ASR Error:", error);
+    throw error;
+  }
+});
+
 ipcMain.handle("tts:speak", async (_event, text) => {
   try {
     return await getTtsQueue().speak(text);
@@ -2709,7 +2750,7 @@ ipcMain.handle("window:moveBy", (_event, deltaX, deltaY) => {
     },
     { fullyVisible: chatVisible || settingsVisible }
   );
-  mainWindow.setPosition(nextBounds.x, nextBounds.y, false);
+  mainWindow.setBounds(nextBounds, false);
   return { ok: true, moved: true };
 });
 

@@ -59,6 +59,10 @@ body.chat-collapsed .composer {
   display: none;
 }
 
+body.pet-booting .portrait {
+  visibility: hidden;
+}
+
 .titlebar,
 .composer {
   border: 1px solid rgba(255, 255, 255, 0.46);
@@ -1221,4 +1225,47 @@ body.proactive-pulse .bubble {
   transform: translateY(-2px);
   border-color: rgba(217, 79, 139, 0.32);
   box-shadow: 0 8px 20px rgba(92, 38, 66, 0.06);
+}
+
+/* Microphone Floating Button Styles */
+.mic-button {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #fff;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(169, 47, 104, 0.32);
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s ease, box-shadow 0.2s ease;
+  z-index: 10;
+  -webkit-app-region: no-drag;
+}
+
+.mic-button:hover {
+  transform: scale(1.08);
+  background: var(--accent-strong);
+  box-shadow: 0 6px 16px rgba(169, 47, 104, 0.45);
+}
+
+.mic-button.recording {
+  background: #d93838 !important;
+  box-shadow: 0 0 0 4px rgba(217, 56, 56, 0.28), 0 0 16px rgba(217, 56, 56, 0.45) !important;
+  animation: pulse-recording 1.2s infinite alternate ease-in-out !important;
+}
+
+@keyframes pulse-recording {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.12);
+  }
 }

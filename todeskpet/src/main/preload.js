@@ -35,6 +35,7 @@ contextBridge.exposeInMainWorld("tablePet", {
   stopSovits: () => ipcRenderer.invoke("sovits:stop"),
   getSovitsStatus: () => ipcRenderer.invoke("sovits:status"),
   speak: (text) => ipcRenderer.invoke("tts:speak", text),
+  transcribeAudio: (arrayBuffer) => ipcRenderer.invoke("asr:transcribe", arrayBuffer),
   togglePin: () => ipcRenderer.invoke("window:togglePin"),
   setChatVisible: (visible) => ipcRenderer.invoke("window:setChatVisible", visible),
   setSettingsVisible: (visible) => ipcRenderer.invoke("window:setSettingsVisible", visible),
