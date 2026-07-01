@@ -57,6 +57,8 @@ const resetPromptButton = document.querySelector("#resetPromptButton");
 const apiKeyState = document.querySelector("#apiKeyState");
 const baseUrlText = document.querySelector("#baseUrlText");
 const ttsUrlText = document.querySelector("#ttsUrlText");
+let apiKeyInput = null;
+let saveApiKeyButton = null;
 const memorySearchInput = document.querySelector("#memorySearchInput");
 const refreshMemoryButton = document.querySelector("#refreshMemoryButton");
 const memoryTypeSelect = document.querySelector("#memoryTypeSelect");
@@ -634,6 +636,7 @@ function applySettings(settings) {
   apiKeyState.textContent = settings.hasApiKey
     ? `${providerLabel(settings.provider)} API key 已从 .env 读取`
     : `未检测到 ${settings.apiKeyEnv}，将使用本地兜底回复`;
+  updateApiKeyControls(settings);
   baseUrlText.textContent = `Base URL: ${settings.baseUrl}`;
   ttsUrlText.textContent = settings.hasSovitsUrl
     ? `Qwen3-TTS: ${settings.sovitsUrl}`
@@ -777,6 +780,57 @@ function providerLabel(providerId) {
   return providerOptions.find((item) => item.id === providerId)?.label || providerId;
 }
 
+function ensureApiKeyControls() {
+  if (apiKeyInput && saveApiKeyButton) return;
+  const providerRow = providerSelect?.closest("label");
+  if (!providerRow) return;
+
+  const row = document.createElement("div");
+  row.className = "api-key-row compact-grid";
+
+  const label = document.createElement("label");
+  const labelText = document.createElement("span");
+  labelText.textContent = "API Key";
+  apiKeyInput = document.createElement("input");
+  apiKeyInput.type = "password";
+  apiKeyInput.autocomplete = "off";
+  apiKeyInput.placeholder = "Paste API Key";
+  label.append(labelText, apiKeyInput);
+
+  saveApiKeyButton = document.createElement("button");
+  saveApiKeyButton.type = "button";
+  saveApiKeyButton.title = "保存 API Key";
+  saveApiKeyButton.setAttribute("aria-label", "保存 API Key");
+  saveApiKeyButton.addEventListener("click", saveApiKeyFromSettings);
+
+  row.append(label, saveApiKeyButton);
+  providerRow.insertAdjacentElement("afterend", row);
+}
+
+function updateApiKeyControls(settings = {}) {
+  ensureApiKeyControls();
+  if (!apiKeyInput) return;
+  const provider = providerOptions.find((item) => item.id === (settings.provider || providerSelect.value));
+  const envName = settings.apiKeyEnv || provider?.apiKeyEnv || "API_KEY";
+  const hasKey = Object.prototype.hasOwnProperty.call(settings, "hasApiKey") ? settings.hasApiKey : provider?.hasApiKey;
+  apiKeyInput.value = "";
+  apiKeyInput.placeholder = hasKey ? `${envName} 已保存，留空不修改` : `粘贴 ${envName}`;
+}
+
+async function saveApiKeyFromSettings() {
+  ensureApiKeyControls();
+  const key = String(apiKeyInput?.value || "").trim();
+  if (!key) {
+    window.tablePetNotify?.warning?.("请先粘贴 API Key");
+    return;
+  }
+
+  const saved = await window.tablePet.saveApiKey(providerSelect.value, key);
+  applySettings(saved);
+  showReply("[Emotion: Happy]\nAPI Key 已保存，之后聊天会优先使用云端模型。");
+  setEmotion("Happy");
+}
+
 function providerDefaultModel(providerId) {
   return providerOptions.find((item) => item.id === providerId)?.defaultModel || "";
 }
@@ -871,6 +925,7 @@ resetPromptButton.addEventListener("click", () => {
 providerSelect.addEventListener("change", () => {
   renderModelSuggestions(providerSelect.value);
   modelInput.value = providerDefaultModel(providerSelect.value);
+  updateApiKeyControls({ provider: providerSelect.value });
 });
 
 refreshMemoryButton.addEventListener("click", () => loadMemory());
@@ -998,6 +1053,10 @@ makeMagnetic(replayVoiceButton);
 
 // ASR Recording & Transcription Logic
 const micButton = document.querySelector("#micButton");
+const inputRow = document.querySelector(".input-row");
+if (inputRow && micButton && micButton.parentElement !== inputRow) {
+  inputRow.appendChild(micButton);
+}
 let mediaRecorder = null;
 let audioChunks = [];
 

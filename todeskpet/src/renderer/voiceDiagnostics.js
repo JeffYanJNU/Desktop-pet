@@ -27,6 +27,45 @@
     }[stage] || stage || "未知";
   }
 
+  function enhanceDiagnosticsPanel() {
+    const panel = document.querySelector(".voice-diagnostics");
+    if (!panel || panel.dataset.enhanced === "true") return;
+    panel.dataset.enhanced = "true";
+
+    const header = panel.querySelector(".voice-diagnostics-header");
+    const grid = panel.querySelector(".diagnostic-grid");
+    const raw = panel.querySelector(".diagnostic-raw");
+    if (!header || !grid || !raw) return;
+
+    const title = header.querySelector("strong");
+    if (title) title.textContent = "运行日志与诊断";
+
+    const details = document.createElement("details");
+    details.className = "voice-diagnostics-details";
+
+    const summary = document.createElement("summary");
+    const summaryText = document.createElement("span");
+    summaryText.textContent = "查看运行日志";
+    summary.appendChild(summaryText);
+
+    const button = header.querySelector("button");
+    if (button) {
+      button.textContent = "刷新";
+    }
+
+    const body = document.createElement("div");
+    body.className = "voice-diagnostics-body";
+    if (button) {
+      const toolbar = document.createElement("div");
+      toolbar.className = "voice-diagnostics-toolbar";
+      toolbar.appendChild(button);
+      body.appendChild(toolbar);
+    }
+    body.append(grid, raw);
+    details.append(summary, body);
+    panel.replaceChildren(details);
+  }
+
   function formatHealth(health) {
     if (!health) return "未返回";
     if (health.ok) {
@@ -105,7 +144,11 @@
   }
 
   window.addEventListener("DOMContentLoaded", () => {
-    byId("refreshVoiceDiagnosticsButton")?.addEventListener("click", refreshDiagnostics);
+    enhanceDiagnosticsPanel();
+    byId("refreshVoiceDiagnosticsButton")?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      refreshDiagnostics();
+    });
     setTimeout(refreshDiagnostics, 600);
   });
 

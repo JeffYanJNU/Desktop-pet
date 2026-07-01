@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld("tablePet", {
   resetAchievements: () => ipcRenderer.invoke("achievement:reset"),
   getSettings: () => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings) => ipcRenderer.invoke("settings:save", settings),
+  saveApiKey: (provider, apiKey) => ipcRenderer.invoke("settings:saveApiKey", provider, apiKey),
   getBackgroundInfo: (options) => ipcRenderer.invoke("background:get", options || {}),
   checkProactive: () => ipcRenderer.invoke("proactive:check"),
   invokeTool: (name, args) => ipcRenderer.invoke("tools:invoke", name, args || {}),

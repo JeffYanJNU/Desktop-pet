@@ -1276,3 +1276,1028 @@ body.proactive-pulse .bubble {
     transform: scale(1.12);
   }
 }
+
+/* Material 3 (Material You) visual refresh */
+:root {
+  color-scheme: light;
+  --md-sys-color-primary: #006a6a;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #9cf1ef;
+  --md-sys-color-on-primary-container: #002020;
+  --md-sys-color-secondary: #4a635f;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #cce8e2;
+  --md-sys-color-on-secondary-container: #05201d;
+  --md-sys-color-tertiary: #705d00;
+  --md-sys-color-tertiary-container: #ffe16a;
+  --md-sys-color-on-tertiary-container: #221b00;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-surface: #f7fbf8;
+  --md-sys-color-surface-dim: #d7dbd8;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f1f5f2;
+  --md-sys-color-surface-container: #ebefec;
+  --md-sys-color-surface-container-high: #e5e9e6;
+  --md-sys-color-surface-container-highest: #dfe4e1;
+  --md-sys-color-on-surface: #171d1b;
+  --md-sys-color-on-surface-variant: #3f4947;
+  --md-sys-color-outline: #6f7976;
+  --md-sys-color-outline-variant: #bec9c5;
+  --md-sys-color-scrim: #000000;
+  --md-ref-palette-coral: #9b4050;
+  --md-state-hover: rgba(0, 106, 106, 0.08);
+  --md-state-focus: rgba(0, 106, 106, 0.12);
+  --md-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.18), 0 1px 3px 1px rgba(0, 0, 0, 0.08);
+  --md-elevation-2: 0 1px 2px rgba(0, 0, 0, 0.2), 0 2px 6px 2px rgba(0, 0, 0, 0.1);
+  --md-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.16);
+  --ink: var(--md-sys-color-on-surface);
+  --muted: var(--md-sys-color-on-surface-variant);
+  --panel: color-mix(in srgb, var(--md-sys-color-surface-container) 88%, transparent);
+  --panel-strong: color-mix(in srgb, var(--md-sys-color-surface-container-high) 94%, transparent);
+  --panel-hot: var(--md-sys-color-primary-container);
+  --line: var(--md-sys-color-outline-variant);
+  --accent: var(--md-sys-color-primary);
+  --accent-strong: #004f4f;
+  --mint: #2e7d32;
+  --gold: var(--md-sys-color-tertiary);
+  --violet: var(--md-ref-palette-coral);
+  --shadow: var(--md-elevation-2);
+}
+
+button,
+input,
+select,
+textarea {
+  letter-spacing: 0;
+}
+
+.titlebar,
+.composer,
+.bubble,
+.settings-dialog,
+.pet-context-menu,
+.pomodoro-panel {
+  border-color: var(--md-sys-color-outline-variant) !important;
+  background: var(--md-sys-color-surface-container) !important;
+  box-shadow: var(--md-elevation-2) !important;
+  backdrop-filter: none !important;
+}
+
+.titlebar {
+  min-height: 40px;
+  border-radius: 20px;
+  padding-inline: 14px 8px;
+}
+
+.status {
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+}
+
+.status-dot {
+  background: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+}
+
+.pet-state-summary {
+  color: var(--md-sys-color-on-secondary-container);
+  background: var(--md-sys-color-secondary-container);
+}
+
+.voice-status {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.icon-button,
+.pet-context-menu button,
+.memory-item-actions button,
+.pomodoro-panel button.ghost {
+  border: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  background: transparent;
+  box-shadow: none;
+}
+
+.icon-button {
+  border-radius: 50%;
+}
+
+.icon-button:hover,
+.pet-context-menu button:hover,
+.memory-item-actions button:hover,
+.pomodoro-panel button.ghost:hover {
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-state-hover);
+}
+
+.icon-button:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--md-sys-color-primary) 42%, transparent);
+  outline-offset: 2px;
+}
+
+body.pet-long-press-dragging .portrait::after {
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 52%, transparent);
+}
+
+.bubble {
+  border-radius: 28px;
+  background: var(--md-sys-color-primary-container) !important;
+  color: var(--md-sys-color-on-primary-container);
+  box-shadow: var(--md-elevation-3) !important;
+}
+
+.bubble p {
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 500;
+}
+
+.bubble p::-webkit-scrollbar-thumb,
+.memory-list::-webkit-scrollbar-thumb,
+.settings-dialog form::-webkit-scrollbar-thumb,
+.diagnostic-raw::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--md-sys-color-outline) 42%, transparent);
+}
+
+.composer {
+  border-radius: 24px;
+  padding: 10px;
+  background: var(--md-sys-color-surface-container-high) !important;
+}
+
+textarea,
+select,
+input {
+  min-height: 40px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 12px;
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-lowest);
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+textarea:hover,
+select:hover,
+input:hover {
+  border-color: var(--md-sys-color-on-surface);
+}
+
+textarea:focus,
+select:focus,
+input:focus {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
+}
+
+input[type="checkbox"],
+input[type="range"] {
+  accent-color: var(--md-sys-color-primary);
+}
+
+#sendButton,
+#saveSettingsButton,
+#addMemoryButton,
+#startSovitsButton,
+#saveScheduleButton,
+.state-actions button:first-child,
+.schedule-editor-head button,
+.file-pick-row button,
+.service-row button,
+.voice-diagnostics-header button,
+.memory-toolbar button,
+.memory-actions button:first-child,
+.portrait-picker-item button,
+.mic-button {
+  border: 0;
+  border-radius: 20px;
+  color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
+  box-shadow: none;
+}
+
+#sendButton:hover,
+#saveSettingsButton:hover,
+#addMemoryButton:hover,
+#startSovitsButton:hover,
+#saveScheduleButton:hover,
+.state-actions button:first-child:hover,
+.schedule-editor-head button:hover,
+.file-pick-row button:hover,
+.service-row button:hover,
+.voice-diagnostics-header button:hover,
+.memory-toolbar button:hover,
+.memory-actions button:first-child:hover,
+.portrait-picker-item button:hover,
+.mic-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 92%, white);
+  box-shadow: var(--md-elevation-1);
+}
+
+#resetPromptButton,
+.state-actions button,
+.memory-actions button,
+.pomodoro-panel button {
+  border: 0;
+  border-radius: 20px;
+  color: var(--md-sys-color-on-secondary-container);
+  background: var(--md-sys-color-secondary-container);
+}
+
+#resetPromptButton:hover,
+.state-actions button:hover,
+.memory-actions button:hover,
+.pomodoro-panel button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-secondary-container) 84%, var(--md-sys-color-on-secondary-container));
+}
+
+.settings-dialog {
+  border-radius: 28px;
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-low) !important;
+}
+
+.settings-dialog::backdrop {
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 26%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.settings-dialog form {
+  background:
+    linear-gradient(180deg, var(--md-sys-color-surface-container-lowest), var(--md-sys-color-surface-container-low));
+}
+
+.settings-head h2,
+.settings-divider,
+.settings-section summary,
+.portrait-picker-copy strong,
+.memory-item-head span:first-child {
+  color: var(--md-sys-color-on-surface);
+}
+
+.settings-head p,
+.settings-meta,
+.settings-dialog label,
+.settings-section summary::after,
+.state-hint,
+.file-pick-row span,
+.service-status,
+.diagnostic-grid span,
+.diagnostic-raw,
+.memory-stats,
+.memory-empty,
+.memory-item-head,
+.memory-item-meta,
+.memory-tags span,
+.portrait-picker-head span,
+.portrait-picker-copy span {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+details.settings-section,
+.pet-state-panel,
+.schedule-panel,
+.voice-diagnostics,
+.portrait-picker-item,
+.memory-item {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 18px;
+  background: var(--md-sys-color-surface-container);
+}
+
+details.settings-section {
+  padding: 4px 10px 10px;
+}
+
+.settings-section summary {
+  height: 40px;
+}
+
+.settings-options .checkbox-row,
+.memory-pin-row,
+.check-row {
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 20px;
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.voice-diagnostics,
+.memory-item,
+.portrait-picker-item {
+  box-shadow: none;
+}
+
+.diagnostic-raw,
+.portrait-picker-preview,
+.memory-tags span {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.memory-item:hover,
+.portrait-picker-item:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 46%, var(--md-sys-color-outline-variant));
+  box-shadow: var(--md-elevation-1);
+}
+
+.pet-context-menu {
+  border-radius: 16px;
+  padding: 8px;
+  background: var(--md-sys-color-surface-container-high) !important;
+}
+
+.pet-context-menu button {
+  border-radius: 12px;
+}
+
+.memory-skeleton {
+  border-color: var(--md-sys-color-outline-variant);
+  background: linear-gradient(
+    90deg,
+    var(--md-sys-color-surface-container) 25%,
+    var(--md-sys-color-surface-container-highest) 37%,
+    var(--md-sys-color-surface-container) 63%
+  );
+}
+
+#sendButton::after,
+#saveSettingsButton::after,
+#addMemoryButton::after,
+#startSovitsButton::after,
+#saveScheduleButton::after,
+.shine-effect::after {
+  display: none;
+}
+
+.click-ripple {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) 26%, transparent);
+}
+
+.mic-button.recording {
+  background: var(--md-sys-color-error) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--md-sys-color-error) 28%, transparent) !important;
+}
+
+/* Material 3 refinement pass: calmer color, less nesting, clearer controls */
+:root {
+  --md-sys-color-primary: #146c66;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #d2ebe6;
+  --md-sys-color-on-primary-container: #06201d;
+  --md-sys-color-secondary-container: #dbe7e3;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f6f9f6;
+  --md-sys-color-surface-container: #eef3ef;
+  --md-sys-color-surface-container-high: #e7eeea;
+  --md-sys-color-surface-container-highest: #dfe8e4;
+  --md-sys-color-outline-variant: #c6d1cd;
+  --md-elevation-1: 0 1px 2px rgba(18, 28, 25, 0.14);
+  --md-elevation-2: 0 2px 6px rgba(18, 28, 25, 0.14);
+  --md-elevation-3: 0 6px 18px rgba(18, 28, 25, 0.16);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--md-sys-color-outline) 48%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  min-height: 36px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--md-sys-color-outline) 46%, transparent);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--md-sys-color-outline) 72%, transparent);
+  background-clip: content-box;
+}
+
+.titlebar {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.status {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#emotionLabel,
+.pet-state-summary,
+.voice-status {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 82%, transparent);
+  box-shadow: var(--md-elevation-1);
+  line-height: 1;
+}
+
+#emotionLabel {
+  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-primary-container);
+}
+
+.bubble {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 92%, transparent) !important;
+  color: var(--md-sys-color-on-surface);
+  box-shadow: var(--md-elevation-1) !important;
+}
+
+.bubble p {
+  color: var(--md-sys-color-on-surface);
+}
+
+.composer {
+  grid-template-rows: auto;
+  gap: 6px;
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 92%, transparent) !important;
+}
+
+.composer #screenContext {
+  min-height: 34px;
+  max-height: 76px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.input-row {
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 24px;
+  padding: 4px 6px 4px 12px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.input-row #messageInput {
+  height: 38px;
+  min-height: 38px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.input-row #messageInput:focus {
+  box-shadow: none;
+}
+
+#sendButton {
+  width: 72px;
+  height: 38px;
+  border-radius: 19px;
+}
+
+.mic-button {
+  position: static;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  box-shadow: none;
+}
+
+.mic-button:hover {
+  color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
+}
+
+.settings-tabs {
+  background: var(--md-sys-color-surface-container-low) !important;
+  border-right-color: var(--md-sys-color-outline-variant) !important;
+}
+
+.settings-tabs button {
+  border-radius: 999px !important;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.settings-tabs button::before {
+  content: none;
+}
+
+.settings-tabs button.active {
+  color: var(--md-sys-color-on-secondary-container);
+  background: var(--md-sys-color-secondary-container) !important;
+  padding-left: 14px !important;
+}
+
+.settings-tabs button:hover {
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-state-hover) !important;
+  padding-left: 14px !important;
+}
+
+.settings-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.settings-meta span {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: var(--md-sys-color-surface-container-lowest);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.settings-actions button {
+  width: auto;
+  min-width: 96px;
+  padding: 0 18px;
+}
+
+.settings-dialog .checkbox-row,
+.settings-dialog .check-row,
+.memory-pin-row {
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 0;
+  background: transparent;
+}
+
+.settings-dialog input[type="checkbox"] {
+  width: 44px;
+  height: 26px;
+  appearance: none;
+  position: relative;
+  flex: 0 0 auto;
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: 999px;
+  padding: 0;
+  background: var(--md-sys-color-surface-container-highest);
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.settings-dialog input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--md-sys-color-outline);
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.settings-dialog input[type="checkbox"]:checked {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary);
+}
+
+.settings-dialog input[type="checkbox"]:checked::after {
+  transform: translateX(18px);
+  background: var(--md-sys-color-on-primary);
+}
+
+.scale-row {
+  grid-template-columns: 92px minmax(0, 1fr) 64px;
+}
+
+.scale-row input,
+.state-range-row input {
+  height: 32px;
+}
+
+#scaleValueText,
+.state-range-row b {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-primary-container);
+  font-variant-numeric: tabular-nums;
+}
+
+details.settings-section,
+.pet-state-panel,
+.schedule-panel,
+.voice-diagnostics,
+.portrait-picker-item,
+.memory-item {
+  background: transparent;
+  box-shadow: none;
+}
+
+.pet-state-panel,
+.schedule-panel,
+.portrait-settings-panel {
+  gap: 14px;
+}
+
+.background-link-panel {
+  border-top-color: var(--md-sys-color-outline-variant);
+}
+
+#backgroundStatePreview,
+#scheduleCurrentText {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 18px;
+  padding: 12px;
+  background: var(--md-sys-color-surface-container-low);
+  font-family: inherit;
+  white-space: pre-line;
+}
+
+.memory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.memory-actions button {
+  width: auto;
+  min-width: 72px;
+  padding: 0 12px;
+}
+
+#addMemoryButton {
+  min-width: 104px;
+}
+
+#exportMemoryButton,
+#importMemoryButton {
+  min-width: 54px;
+  color: var(--md-sys-color-on-secondary-container);
+  background: var(--md-sys-color-secondary-container);
+}
+
+#evolveMemoryButton,
+#organizeMemoryButton,
+#clearSensitiveMemoryButton {
+  color: var(--md-sys-color-on-surface-variant);
+  background: transparent;
+}
+
+#clearMemoryButton {
+  margin-left: auto;
+  color: #ffffff;
+  background: var(--md-sys-color-error);
+}
+
+#clearMemoryButton:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error) 88%, white);
+}
+
+.api-key-row.compact-grid {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.api-key-row button {
+  align-self: end;
+  width: 42px;
+  min-width: 42px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 50%;
+  padding: 0;
+  color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
+  text-indent: -999px;
+}
+
+.api-key-row button::before {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  text-indent: 0;
+  font-size: 18px;
+}
+
+.schedule-visual-list {
+  display: grid;
+  gap: 8px;
+}
+
+.schedule-card {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 18px;
+  padding: 10px 12px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.schedule-time {
+  display: grid;
+  gap: 2px;
+  color: var(--md-sys-color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-time span {
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+}
+
+.schedule-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.schedule-copy strong {
+  overflow: hidden;
+  color: var(--md-sys-color-on-surface);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-copy span {
+  overflow: hidden;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-card b {
+  min-width: 42px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  text-align: center;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-card b.is-positive {
+  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-primary-container);
+}
+
+.schedule-card b.is-negative {
+  color: #410002;
+  background: #ffdad6;
+}
+
+.schedule-empty {
+  margin: 0;
+  border: 1px dashed var(--md-sys-color-outline-variant);
+  border-radius: 18px;
+  padding: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.schedule-json-details {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 18px;
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.schedule-json-details summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--md-sys-color-on-surface);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.schedule-json-details .schedule-editor-head,
+.schedule-json-details #aiScheduleJsonInput {
+  margin: 0 12px 12px;
+}
+
+.voice-diagnostics {
+  padding: 0;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 18px;
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.voice-diagnostics-details summary {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  color: var(--md-sys-color-on-surface);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.voice-diagnostics-details summary::marker {
+  color: var(--md-sys-color-primary);
+}
+
+.voice-diagnostics-details summary button {
+  height: 32px;
+  border-radius: 16px;
+}
+
+.voice-diagnostics-body {
+  display: grid;
+  gap: 10px;
+  padding: 0 12px 12px;
+}
+
+.voice-diagnostics-body .diagnostic-grid {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding-top: 10px;
+}
+
+@media (max-width: 520px) {
+  .schedule-card {
+    grid-template-columns: 1fr auto;
+  }
+
+  .schedule-time {
+    grid-column: 1 / -1;
+    grid-template-columns: auto auto;
+    justify-content: start;
+  }
+
+  .memory-actions button,
+  #clearMemoryButton {
+    flex: 1 1 auto;
+    margin-left: 0;
+  }
+}
+
+/* Final interaction refinements */
+.titlebar {
+  border: 1px solid var(--md-sys-color-outline-variant) !important;
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 94%, transparent) !important;
+  box-shadow: var(--md-elevation-1) !important;
+}
+
+.composer {
+  padding: 6px;
+  border-radius: 28px;
+}
+
+.composer #screenContext {
+  display: none !important;
+}
+
+body.chat-visible .composer {
+  width: clamp(260px, calc(100vw - min(560px, 100vw) - 32px), 390px);
+}
+
+.input-row {
+  min-height: 52px;
+  grid-template-columns: minmax(0, 1fr) 40px 76px;
+  border-radius: 26px;
+  padding: 5px 6px 5px 16px;
+}
+
+.input-row #messageInput {
+  height: 40px;
+  min-height: 40px;
+  font-size: 13px;
+}
+
+.input-row .mic-button {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.input-row #sendButton {
+  grid-column: 3;
+  grid-row: 1;
+  height: 40px;
+}
+
+.settings-dialog .checkbox-row,
+.settings-dialog .check-row,
+.settings-dialog .memory-pin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 999px;
+  padding: 8px 10px 8px 14px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.settings-dialog .checkbox-row span,
+.settings-dialog .check-row span,
+.settings-dialog .memory-pin-row span {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  padding: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.settings-dialog .checkbox-row input[type="checkbox"],
+.settings-dialog .check-row input[type="checkbox"],
+.settings-dialog .memory-pin-row input[type="checkbox"] {
+  grid-column: 2;
+  grid-row: 1;
+  width: 48px;
+  height: 28px;
+}
+
+.settings-dialog input[type="checkbox"]::after {
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+}
+
+.settings-dialog input[type="checkbox"]:checked::after {
+  transform: translateX(20px);
+}
+
+.settings-options {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.compact-grid .memory-pin-row {
+  align-self: end;
+}
+
+/* Final switch and diagnostics details tuning */
+.settings-dialog .checkbox-row input[type="checkbox"],
+.settings-dialog .check-row input[type="checkbox"],
+.settings-dialog .memory-pin-row input[type="checkbox"],
+.settings-dialog input[type="checkbox"] {
+  width: 50px;
+  height: 20px;
+  min-height: 20px;
+  border-width: 1px;
+  box-sizing: content-box;
+}
+
+.settings-dialog input[type="checkbox"]::after {
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.settings-dialog input[type="checkbox"]:checked::after {
+  transform: translateX(30px);
+}
+
+.voice-diagnostics-details summary {
+  justify-content: flex-start;
+}
+
+.voice-diagnostics-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+}
+
+.voice-diagnostics-toolbar #refreshVoiceDiagnosticsButton {
+  min-width: 72px;
+  height: 34px;
+  border-radius: 17px;
+}

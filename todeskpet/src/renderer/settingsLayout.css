@@ -143,3 +143,108 @@ body.settings-open .pet-context-menu {
 .settings-dialog .compact-grid {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
+
+/* Material 3 settings layout refinement */
+.settings-dialog {
+  border-radius: 28px !important;
+}
+
+.settings-dialog form {
+  grid-template-columns: 180px minmax(0, 1fr) !important;
+  grid-template-rows: 72px minmax(0, 1fr) 58px !important;
+  background: var(--md-sys-color-surface-container-low, #f6f9f6) !important;
+}
+
+.settings-head {
+  border-bottom-color: var(--md-sys-color-outline-variant, #c6d1cd) !important;
+  background: var(--md-sys-color-surface-container-lowest, #fff) !important;
+}
+
+.settings-tabs {
+  gap: 6px !important;
+  padding: 14px 12px !important;
+  border-right-color: var(--md-sys-color-outline-variant, #c6d1cd) !important;
+  background: var(--md-sys-color-surface-container-low, #f6f9f6) !important;
+}
+
+.settings-tabs button {
+  height: 40px !important;
+  border-radius: 999px !important;
+  padding: 0 14px !important;
+  color: var(--md-sys-color-on-surface-variant, #3f4947) !important;
+  background: transparent !important;
+}
+
+.settings-tabs button::before {
+  content: none !important;
+}
+
+.settings-tabs button.active {
+  color: var(--md-sys-color-on-secondary-container, #05201d) !important;
+  background: var(--md-sys-color-secondary-container, #dbe7e3) !important;
+  padding-left: 14px !important;
+}
+
+.settings-tabs button:hover {
+  color: var(--md-sys-color-on-surface, #171d1b) !important;
+  background: var(--md-state-hover, rgba(20, 108, 102, .08)) !important;
+  padding-left: 14px !important;
+}
+
+.settings-dialog .settings-section {
+  padding: 20px 24px !important;
+}
+
+.settings-meta {
+  display: flex !important;
+  align-items: center;
+  gap: 8px !important;
+  padding: 10px 16px !important;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #c6d1cd);
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 10px !important;
+}
+
+.settings-meta span {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline-variant, #c6d1cd);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: var(--md-sys-color-surface-container-low, #f6f9f6);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-actions {
+  display: flex !important;
+  justify-content: flex-end;
+  gap: 10px !important;
+  padding: 10px 16px !important;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #c6d1cd);
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+}
+
+.settings-dialog .checkbox-row,
+.settings-dialog .check-row,
+.settings-dialog .memory-pin-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 44px !important;
+  border: 1px solid var(--md-sys-color-outline-variant, #c6d1cd) !important;
+  border-radius: 999px !important;
+  padding: 8px 10px 8px 14px !important;
+  background: var(--md-sys-color-surface-container-lowest, #fff) !important;
+}
+
+.settings-dialog .checkbox-row input[type="checkbox"],
+.settings-dialog .check-row input[type="checkbox"],
+.settings-dialog .memory-pin-row input[type="checkbox"],
+.settings-dialog input[type="checkbox"] {
+  width: 50px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+}

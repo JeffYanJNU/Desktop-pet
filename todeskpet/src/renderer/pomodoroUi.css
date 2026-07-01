@@ -197,3 +197,79 @@
     opacity: 1;
   }
 }
+
+/* Material 3 (Material You) pomodoro surface */
+.pomodoro-panel {
+  border: 1px solid var(--md-sys-color-outline-variant, rgba(111, 121, 118, .38));
+  border-radius: 24px;
+  color: var(--md-sys-color-on-surface, #171d1b);
+  background: var(--md-sys-color-surface-container-high, #e5e9e6);
+  box-shadow: var(--md-elevation-2, 0 2px 6px rgba(0, 0, 0, .16));
+  backdrop-filter: none;
+}
+
+.pomodoro-head h2 {
+  color: var(--md-sys-color-on-surface, #171d1b);
+  font-weight: 700;
+}
+
+.pomodoro-clock {
+  border-radius: 22px;
+  background: var(--md-sys-color-primary-container, #9cf1ef);
+}
+
+.pomodoro-clock span,
+.pomodoro-clock strong {
+  color: var(--md-sys-color-on-primary-container, #002020);
+}
+
+.pomodoro-clock small,
+.pomodoro-settings label,
+.pomodoro-foot {
+  color: var(--md-sys-color-on-surface-variant, #3f4947);
+}
+
+.pomodoro-progress {
+  height: 8px;
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container, #002020) 12%, transparent);
+}
+
+.pomodoro-progress i {
+  background: var(--md-sys-color-primary, #006a6a);
+}
+
+.pomodoro-settings input {
+  border: 1px solid var(--md-sys-color-outline, #6f7976);
+  border-radius: 12px;
+  color: var(--md-sys-color-on-surface, #171d1b);
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+}
+
+.pomodoro-panel button {
+  border-radius: 18px;
+  color: var(--md-sys-color-on-secondary-container, #05201d);
+  background: var(--md-sys-color-secondary-container, #cce8e2);
+  box-shadow: none;
+}
+
+.pomodoro-panel button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-secondary-container, #cce8e2) 84%, var(--md-sys-color-on-secondary-container, #05201d));
+}
+
+.pomodoro-actions button:first-child {
+  color: var(--md-sys-color-on-primary, #fff);
+  background: var(--md-sys-color-primary, #006a6a);
+}
+
+.pomodoro-actions button:first-child:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary, #006a6a) 92%, white);
+}
+
+.pomodoro-panel button.ghost {
+  color: var(--md-sys-color-on-surface-variant, #3f4947);
+  background: transparent;
+}
+
+.pomodoro-panel button.ghost:hover {
+  background: var(--md-state-hover, rgba(0, 106, 106, .08));
+}

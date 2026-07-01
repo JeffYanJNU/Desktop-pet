@@ -10,6 +10,7 @@ __pycache__/
 *.py[cod]
 
 dist/
+dist-full/
 out/
 build/
 *.egg-info/

@@ -34,6 +34,8 @@ const {
   createAppConfig
 } = require("./appConfig");
 
+const RUNTIME_ROOT = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "../../..");
+
 const {
   PROJECT_ROOT,
   QWEN_TTS_DIR,
@@ -41,7 +43,7 @@ const {
   QWEN_TTS_API_SCRIPT,
   QWEN_TTS_PYTHON,
   DEFAULT_SETTINGS
-} = createAppConfig(path.resolve(__dirname, "../../.."), DEFAULT_CHARACTER_ID);
+} = createAppConfig(RUNTIME_ROOT, DEFAULT_CHARACTER_ID);
 
 let mainWindow;
 let settingsCache;
@@ -71,7 +73,7 @@ let lastProactiveReminderAt = 0;
 let lastProactiveReminderKey = "";
 
 function getLocalDataDir() {
-  return path.join(app.getAppPath(), "data");
+  return app.isPackaged ? app.getPath("userData") : path.join(app.getAppPath(), "data");
 }
 
 function migrateLegacyData() {
@@ -165,29 +167,50 @@ function getTtsQueue() {
   return ttsQueue;
 }
 
+function ensureUserEnvTemplate() {
+  if (!app.isPackaged) return;
+
+  const userEnvPath = path.join(app.getPath("userData"), ".env");
+  if (fs.existsSync(userEnvPath)) return;
+
+  const bundledExamplePath = path.join(app.getAppPath(), ".env.example");
+  if (!fs.existsSync(bundledExamplePath)) return;
+
+  fs.mkdirSync(path.dirname(userEnvPath), { recursive: true });
+  fs.copyFileSync(bundledExamplePath, userEnvPath);
+}
+
 function loadEnvFile() {
-  const envPath = path.join(app.getAppPath(), ".env");
-  if (!fs.existsSync(envPath)) return;
+  ensureUserEnvTemplate();
 
-  for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
+  const envPaths = [
+    path.join(app.getPath("userData"), ".env"),
+    path.join(app.getAppPath(), ".env")
+  ];
 
-    const separatorIndex = trimmed.indexOf("=");
-    if (separatorIndex === -1) continue;
+  for (const envPath of envPaths) {
+    if (!fs.existsSync(envPath)) continue;
 
-    const key = trimmed.slice(0, separatorIndex).trim();
-    let value = trimmed.slice(separatorIndex + 1).trim();
-    if (!key || process.env[key]) continue;
+    for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
 
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
+      const separatorIndex = trimmed.indexOf("=");
+      if (separatorIndex === -1) continue;
+
+      const key = trimmed.slice(0, separatorIndex).trim();
+      let value = trimmed.slice(separatorIndex + 1).trim();
+      if (!key || process.env[key]) continue;
+
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+
+      process.env[key] = value;
     }
-
-    process.env[key] = value;
   }
 }
 
@@ -1023,6 +1046,37 @@ async function pomodoroOutcomeComment({ outcome, minutes, delta, limited, moodSc
   }
 }
 
+function updateUserEnv(values = {}) {
+  const envPath = path.join(app.getPath("userData"), ".env");
+  const current = fs.existsSync(envPath)
+    ? fs.readFileSync(envPath, "utf8").split(/\r?\n/)
+    : [];
+  const updates = new Map(
+    Object.entries(values)
+      .map(([key, value]) => [String(key || "").trim(), String(value || "").trim()])
+      .filter(([key, value]) => key && value)
+  );
+  const seen = new Set();
+  const nextLines = current.map((line) => {
+    const separatorIndex = line.indexOf("=");
+    if (separatorIndex === -1 || line.trim().startsWith("#")) return line;
+    const key = line.slice(0, separatorIndex).trim();
+    if (!updates.has(key)) return line;
+    seen.add(key);
+    return `${key}=${updates.get(key)}`;
+  });
+
+  for (const [key, value] of updates.entries()) {
+    if (!seen.has(key)) nextLines.push(`${key}=${value}`);
+    process.env[key] = value;
+  }
+
+  fs.mkdirSync(path.dirname(envPath), { recursive: true });
+  fs.writeFileSync(envPath, `${nextLines.join("\n").trim()}\n`, "utf8");
+  settingsCache = null;
+  return { ok: true, envPath };
+}
+
 async function handlePomodoroOutcome(payload = {}) {
   const outcome = payload.outcome === "completed" ? "completed" : "interrupted";
   const requestedDelta = outcome === "completed" ? 1 : -1;
@@ -1074,6 +1128,8 @@ function readSettings() {
       ? process.env.LLM_PROVIDER
       : DEFAULT_SETTINGS.provider;
 
+  const defaultTtsProvider = app.isPackaged ? "streaming" : DEFAULT_SETTINGS.ttsProvider;
+  const defaultQwenTtsMode = app.isPackaged ? "clone" : DEFAULT_SETTINGS.qwenTtsMode;
   const envDefaults = {
     provider: envProvider,
     model: process.env.LLM_MODEL || PROVIDERS[envProvider].defaultModel,
@@ -1081,7 +1137,7 @@ function readSettings() {
     voiceEnabled: process.env.PET_VOICE_ENABLED
       ? !/^(0|false|off|no)$/i.test(process.env.PET_VOICE_ENABLED)
       : DEFAULT_SETTINGS.voiceEnabled,
-    ttsProvider: normalizeTtsProvider(process.env.PET_TTS_PROVIDER || DEFAULT_SETTINGS.ttsProvider),
+    ttsProvider: normalizeTtsProvider(process.env.PET_TTS_PROVIDER || defaultTtsProvider),
     autoStartTts: process.env.PET_AUTO_START_TTS
       ? !/^(0|false|off|no)$/i.test(process.env.PET_AUTO_START_TTS)
       : DEFAULT_SETTINGS.autoStartTts,
@@ -1131,7 +1187,7 @@ function readSettings() {
       process.env.SOVITS_TEXT_SPLIT_METHOD || DEFAULT_SETTINGS.sovitsTextSplitMethod,
     sovitsMediaType: process.env.SOVITS_MEDIA_TYPE || DEFAULT_SETTINGS.sovitsMediaType,
     sovitsSpeedFactor: Number(process.env.SOVITS_SPEED_FACTOR || DEFAULT_SETTINGS.sovitsSpeedFactor),
-    qwenTtsMode: normalizeQwenTtsMode(process.env.QWEN_TTS_MODE || DEFAULT_SETTINGS.qwenTtsMode),
+    qwenTtsMode: normalizeQwenTtsMode(process.env.QWEN_TTS_MODE || defaultQwenTtsMode),
     qwenTtsCloneZeroShot: process.env.QWEN_TTS_CLONE_ZERO_SHOT
       ? /^(1|true|on|yes)$/i.test(process.env.QWEN_TTS_CLONE_ZERO_SHOT)
       : DEFAULT_SETTINGS.qwenTtsCloneZeroShot,
@@ -1175,6 +1231,7 @@ function readSettings() {
     settingsCache = { ...DEFAULT_SETTINGS, ...envDefaults };
   }
 
+  settingsCache = resolveRuntimeTtsSettings(settingsCache);
   return settingsCache;
 }
 
@@ -1312,6 +1369,7 @@ function writeSettings(nextSettings) {
       : normalizePomodoroMoodLedger(currentSettings.pomodoroMoodLedger)
   };
 
+  settingsCache = resolveRuntimeTtsSettings(settingsCache);
   fs.mkdirSync(path.dirname(getSettingsPath()), { recursive: true });
   fs.writeFileSync(getSettingsPath(), JSON.stringify(settingsCache, null, 2), "utf8");
   applyAutoLaunch(settingsCache.autoLaunch);
@@ -1377,7 +1435,7 @@ function setTtsRequestStatus(stage, detail = "", textChars = ttsRequestStatus.te
 
 async function getSovitsRuntimeStatus() {
   const status = getSovitsStatus();
-  const settings = readSettings();
+  const settings = resolveRuntimeTtsSettings(readSettings());
   status.config = {
     provider: normalizeTtsProvider(settings.ttsProvider),
     url: settings.sovitsUrl || "",
@@ -1387,6 +1445,7 @@ async function getSovitsRuntimeStatus() {
     modelPath: settings.qwenTtsModelPath || "",
     siliconflowModel: settings.siliconflowTtsModel || ""
   };
+  status.installation = getInstallDiagnostics(settings);
   if (!status.running || !settings.sovitsUrl) return status;
 
   try {
@@ -1445,20 +1504,105 @@ function getTtsHost(url) {
   }
 }
 
+function getBundledTtsProfile(provider) {
+  const normalizedProvider = normalizeTtsProvider(provider);
+  if (normalizedProvider === "streaming") {
+    return {
+      provider: normalizedProvider,
+      dir: path.join(PROJECT_ROOT, "qwensteamtts"),
+      python: fs.existsSync(QWEN_TTS_PYTHON) ? QWEN_TTS_PYTHON : "python",
+      script: "qwen_tts_gguf_api.py",
+      modelPath: QWEN_TTS_MODEL_PATH
+    };
+  }
+
+  return {
+    provider: normalizedProvider,
+    dir: QWEN_TTS_DIR,
+    python: fs.existsSync(QWEN_TTS_PYTHON) ? QWEN_TTS_PYTHON : "python",
+    script: QWEN_TTS_API_SCRIPT,
+    modelPath: QWEN_TTS_MODEL_PATH
+  };
+}
+
+function resolveBundledPath(value, fallback) {
+  const current = String(value || "").trim();
+  const bundled = String(fallback || "").trim();
+  if (!current) return bundled;
+  if (!app.isPackaged) return current;
+  if (fs.existsSync(current)) return current;
+  return bundled || current;
+}
+
+function resolveRuntimeTtsSettings(settings) {
+  const profile = getBundledTtsProfile(settings.ttsProvider);
+  const next = { ...settings };
+  const currentScript = String(next.sovitsApiScript || "").replace(/\\/g, "/");
+  const providerScriptMismatch =
+    (profile.provider === "streaming" && currentScript.endsWith("scripts/qwen_tts_api.py")) ||
+    (profile.provider === "local" && currentScript.endsWith("qwen_tts_gguf_api.py"));
+
+  next.sovitsDir = providerScriptMismatch ? profile.dir : resolveBundledPath(next.sovitsDir, profile.dir);
+  next.sovitsPython = providerScriptMismatch ? profile.python : resolveBundledPath(next.sovitsPython, profile.python);
+  next.sovitsApiScript = providerScriptMismatch
+    ? profile.script
+    : String(next.sovitsApiScript || profile.script).trim() || profile.script;
+  next.qwenTtsModelPath = providerScriptMismatch
+    ? profile.modelPath
+    : resolveBundledPath(next.qwenTtsModelPath, profile.modelPath);
+
+  const scriptPath = path.isAbsolute(next.sovitsApiScript)
+    ? next.sovitsApiScript
+    : path.join(next.sovitsDir, next.sovitsApiScript);
+  if (app.isPackaged && !fs.existsSync(scriptPath)) {
+    next.sovitsApiScript = profile.script;
+  }
+  if (app.isPackaged && profile.provider === "streaming" && normalizeQwenTtsMode(next.qwenTtsMode) !== "clone") {
+    next.qwenTtsMode = "clone";
+  }
+
+  return next;
+}
+
+function getInstallDiagnostics(settings = readSettings()) {
+  const runtimeSettings = resolveRuntimeTtsSettings(settings);
+  const scriptPath = path.isAbsolute(runtimeSettings.sovitsApiScript)
+    ? runtimeSettings.sovitsApiScript
+    : path.join(runtimeSettings.sovitsDir, runtimeSettings.sovitsApiScript);
+
+  return {
+    packaged: app.isPackaged,
+    appPath: app.getAppPath(),
+    resourcesPath: process.resourcesPath,
+    userDataPath: app.getPath("userData"),
+    projectRoot: PROJECT_ROOT,
+    ttsProvider: normalizeTtsProvider(runtimeSettings.ttsProvider),
+    ttsDir: runtimeSettings.sovitsDir,
+    ttsDirExists: fs.existsSync(runtimeSettings.sovitsDir),
+    python: runtimeSettings.sovitsPython,
+    pythonExists: path.isAbsolute(runtimeSettings.sovitsPython) ? fs.existsSync(runtimeSettings.sovitsPython) : null,
+    apiScript: scriptPath,
+    apiScriptExists: fs.existsSync(scriptPath),
+    modelPath: runtimeSettings.qwenTtsModelPath,
+    modelPathExists: fs.existsSync(runtimeSettings.qwenTtsModelPath)
+  };
+}
+
 function getSovitsProcessConfigKey(settings) {
+  const runtimeSettings = resolveRuntimeTtsSettings(settings);
   return JSON.stringify({
-    dir: settings.sovitsDir,
-    python: settings.sovitsPython,
-    script: settings.sovitsApiScript,
-    url: settings.sovitsUrl,
-    mode: normalizeQwenTtsMode(settings.qwenTtsMode),
-    model: settings.qwenTtsModelPath,
-    speaker: settings.qwenTtsSpeaker,
-    language: normalizeQwenTtsLanguage(settings.qwenTtsLanguage),
-    refAudio: settings.sovitsRefAudioPath,
-    refText: settings.sovitsPromptText,
-    cloneZeroShot: settings.qwenTtsCloneZeroShot !== false,
-    maxTokens: clampTtsMaxNewTokens(settings.qwenTtsMaxNewTokens)
+    dir: runtimeSettings.sovitsDir,
+    python: runtimeSettings.sovitsPython,
+    script: runtimeSettings.sovitsApiScript,
+    url: runtimeSettings.sovitsUrl,
+    mode: normalizeQwenTtsMode(runtimeSettings.qwenTtsMode),
+    model: runtimeSettings.qwenTtsModelPath,
+    speaker: runtimeSettings.qwenTtsSpeaker,
+    language: normalizeQwenTtsLanguage(runtimeSettings.qwenTtsLanguage),
+    refAudio: runtimeSettings.sovitsRefAudioPath,
+    refText: runtimeSettings.sovitsPromptText,
+    cloneZeroShot: runtimeSettings.qwenTtsCloneZeroShot !== false,
+    maxTokens: clampTtsMaxNewTokens(runtimeSettings.qwenTtsMaxNewTokens)
   });
 }
 
@@ -1504,6 +1648,7 @@ function publicSettings(settings = readSettings()) {
       label: item.label,
       baseUrl: item.baseUrl,
       defaultModel: item.defaultModel,
+      apiKeyEnv: item.apiKeyEnv,
       hasApiKey: Boolean(process.env[item.apiKeyEnv])
     })),
     hasApiKey: Boolean(process.env[provider.apiKeyEnv]),
@@ -1515,7 +1660,7 @@ function publicSettings(settings = readSettings()) {
       { id: "local", label: "本地微调 (PyTorch)" },
       { id: "streaming", label: "流式处理 (GGUF ONNX)" }
     ],
-    qwenTtsModes: [
+    qwenTtsModes: app.isPackaged ? [{ id: "clone", label: "Voice Clone / reference audio" }] : [
       { id: "custom", label: "CustomVoice / 内置音色" },
       { id: "clone", label: "Voice Clone / 参考音频克隆" }
     ],
@@ -2589,7 +2734,7 @@ async function importMemory() {
 }
 
 function startSovitsService() {
-  const settings = readSettings();
+  const settings = resolveRuntimeTtsSettings(readSettings());
   const configKey = getSovitsProcessConfigKey(settings);
   if (sovitsProcess && !sovitsProcess.killed) {
     if (sovitsProcessConfigKey === configKey) {
@@ -2600,12 +2745,36 @@ function startSovitsService() {
   }
 
   if (!settings.sovitsDir || !fs.existsSync(settings.sovitsDir)) {
+    return {
+      ok: false,
+      error: "找不到本地语音资源目录。请重新安装 TablePet Full，或在设置里切换到可用的语音目录。",
+      diagnostics: getInstallDiagnostics(settings)
+    };
+  }
+
+  if (!settings.sovitsDir || !fs.existsSync(settings.sovitsDir)) {
     return { ok: false, error: "请先选择本地 Qwen3-TTS 项目目录。" };
   }
 
   const scriptPath = path.isAbsolute(settings.sovitsApiScript)
     ? settings.sovitsApiScript
     : path.join(settings.sovitsDir, settings.sovitsApiScript);
+
+  if (!fs.existsSync(scriptPath)) {
+    return {
+      ok: false,
+      error: `找不到本地语音 API 脚本：${scriptPath}`,
+      diagnostics: getInstallDiagnostics(settings)
+    };
+  }
+
+  if (path.isAbsolute(settings.sovitsPython) && !fs.existsSync(settings.sovitsPython)) {
+    return {
+      ok: false,
+      error: `找不到内置 Python：${settings.sovitsPython}`,
+      diagnostics: getInstallDiagnostics(settings)
+    };
+  }
 
   if (!fs.existsSync(scriptPath)) {
     return { ok: false, error: `找不到 API 脚本：${scriptPath}` };
@@ -2732,6 +2901,11 @@ ipcMain.handle("achievement:track", (_event, eventName, payload) => trackAchieve
 ipcMain.handle("achievement:reset", () => getAchievementService().reset());
 
 ipcMain.handle("settings:get", () => publicSettings());
+ipcMain.handle("settings:saveApiKey", (_event, providerId, apiKey) => {
+  const provider = PROVIDERS[providerId] || PROVIDERS.deepseek;
+  updateUserEnv({ [provider.apiKeyEnv]: apiKey });
+  return publicSettings();
+});
 ipcMain.handle("background:get", async (_event, options = {}) => getBackgroundInfo({ force: options?.force === true }));
 ipcMain.handle("proactive:check", () => checkProactiveReminder());
 ipcMain.handle("tools:invoke", (_event, name, args) => invokeLocalTool(name, args || {}));
@@ -2890,9 +3064,9 @@ ipcMain.handle("app:openExternal", (_event, url) => {
 });
 
 app.disableHardwareAcceleration();
-loadEnvFile();
 
 app.whenReady().then(() => {
+  loadEnvFile();
   createWindow();
   trackAchievement("launch");
   autoStartLocalTtsService();
