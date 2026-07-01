@@ -25,8 +25,6 @@
     { key: "chat", label: "聊天中" },
     { key: "thinking", label: "思考中" },
     { key: "speaking", label: "说话中" },
-    { key: "studyFocus", label: "学习专注" },
-    { key: "studyBreak", label: "学习休息" },
     { key: "sleep", label: "睡觉空闲" }
   ];
 
@@ -71,9 +69,7 @@
     edge: 5,
     touch: 6,
     angry: 7,
-    studyBreak: 7,
     thinking: 8,
-    studyFocus: 8,
     speaking: 9,
     drag: 10
   };
@@ -292,15 +288,12 @@
 
   function handleTouch() {
     markUserInteraction();
-    const wasVisible = document.body.classList.contains("chat-visible");
-    if (!wasVisible) setTemporaryState("touch", 2200);
-    if (wasVisible) return;
+    setTemporaryState("touch", 2200);
     showLocalReply(randomItem(TOUCH_LINES));
   }
 
   function handleRandomLine() {
     markUserInteraction();
-    if (document.body.classList.contains("chat-visible")) return;
     showLocalReply(randomItem(RANDOM_LINES));
   }
 
@@ -410,6 +403,9 @@
   async function handleContextAction(event) {
     const button = event.target.closest("button[data-pet-action]");
     if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     const action = button.dataset.petAction;
     hideContextMenu();
     markUserInteraction();
@@ -910,12 +906,6 @@
     else if (stage === "synthesizing" || stage === "starting") setStateSource("voice", "thinking", { priority: STATE_PRIORITY.thinking });
     else if (stage === "error") setStateSource("voice", "angry", { priority: STATE_PRIORITY.angry, duration: 1800 });
     else clearStateSource("voice");
-  });
-  window.addEventListener("tablepet:pomodoro-state", (event) => {
-    const { mode, status } = event.detail || {};
-    if (status === "running" && mode === "focus") setStateSource("pomodoro", "studyFocus", { priority: STATE_PRIORITY.studyFocus });
-    else if (status === "running" && mode === "break") setStateSource("pomodoro", "studyBreak", { priority: STATE_PRIORITY.studyBreak });
-    else clearStateSource("pomodoro");
   });
   window.tablePet.onChatVisibilityChanged?.((visible) => {
     window.__tablePetLastChatVisible = Boolean(visible);

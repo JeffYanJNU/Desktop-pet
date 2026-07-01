@@ -1,8 +1,8 @@
 const { screen } = require("electron");
 
 const WINDOW_BASE_SIZE = {
-  collapsed: { width: 310, height: 340 },
-  chat: { width: 560, height: 680 },
+  collapsed: { width: 560, height: 360 },
+  chat: { width: 820, height: 680 },
   settings: { width: 940, height: 720 }
 };
 
@@ -58,7 +58,7 @@ function getPortraitAnchorOffset(bounds, nextChatVisible, scale = 1) {
   const bottomInset = Math.round(COLLAPSED_PORTRAIT_BOTTOM_INSET * safeScale);
 
   return {
-    x: nextChatVisible ? Math.round(bounds.width - dockWidth / 2) : Math.round(bounds.width / 2),
+    x: Math.round(bounds.width - dockWidth / 2),
     y: Math.round(bounds.height - bottomInset)
   };
 }

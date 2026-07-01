@@ -53,7 +53,7 @@ const ACHIEVEMENTS = [
   ["task_streak_3", "稳定推进", "连续 3 天完成任务", "task_streak_days", 3, "长期陪伴", 8],
   ["first_focus", "番茄入门", "完成第一次 25 分钟专注", "focus_sessions", 1, "长期陪伴", 4],
   ["focus_three_day", "专注三连", "一天完成 3 个番茄钟", "focus_sessions_today", 3, "长期陪伴", 8],
-  ["focus_5h", "学习模式", "累计专注 5 小时", "focus_minutes", 300, "长期陪伴", 10],
+  ["focus_5h", "专注入流", "累计专注 5 小时", "focus_minutes", 300, "长期陪伴", 10],
   ["focus_20h", "自律的人", "累计专注 20 小时", "focus_minutes", 1200, "长期陪伴", 20],
   ["supervised_success", "被监督成功", "累计完成 100 个任务或 50 小时专注", "productivity_score", 100, "长期陪伴", 30]
 ].map(([id, title, description, stat, target, tier, intimacyReward]) => ({

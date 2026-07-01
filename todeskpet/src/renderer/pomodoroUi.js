@@ -97,6 +97,29 @@
     }
   }
 
+  function dispatchOutcomeResult(result) {
+    if (!result?.ok) return;
+    if (typeof window.__tablePetShowPomodoroOutcome === "function") {
+      window.__tablePetShowPomodoroOutcome(result);
+      return;
+    }
+    window.dispatchEvent(new CustomEvent("tablepet:pomodoro-outcome", { detail: result }));
+  }
+
+  async function reportPomodoroOutcome(outcome, minutes) {
+    try {
+      const result = await window.tablePet?.handlePomodoroOutcome?.({
+        outcome,
+        minutes,
+        mode: state.mode,
+        status: state.status
+      });
+      dispatchOutcomeResult(result);
+    } catch (error) {
+      window.tablePetNotify?.capture?.(error, "Pomodoro comment failed");
+    }
+  }
+
   function ensureContextMenuEntry() {
     const menu = document.querySelector("#petContextMenu");
     if (!menu || menu.querySelector("[data-pet-action='pomodoro']")) return;
@@ -111,17 +134,18 @@
 
   function ensurePanel() {
     if (panel) return panel;
-    panel = document.createElement("dialog");
+    panel = document.createElement("aside");
     panel.id = "pomodoroPanel";
     panel.className = "pomodoro-panel";
+    panel.hidden = true;
     panel.innerHTML = `
-      <form method="dialog">
+      <form>
         <header class="pomodoro-head">
           <div>
             <h2>番茄钟</h2>
-            <p>专注时自动进入学习模式立绘，完成后推进专注成就。</p>
+            <p>完成专注后推进番茄钟成就。</p>
           </div>
-          <button type="submit" class="icon-button" aria-label="关闭">×</button>
+          <button type="button" class="icon-button" data-pomodoro-action="collapse" aria-label="Collapse">-</button>
         </header>
         <section class="pomodoro-clock" aria-live="polite">
           <span id="pomodoroModeText">专注</span>
@@ -147,10 +171,10 @@
         </section>
         <footer class="pomodoro-foot">
           <span id="pomodoroStatsText">已完成 0 个番茄钟</span>
-          <button type="button" data-pomodoro-action="focus-costume">预览学习模式</button>
         </footer>
       </form>
     `;
+    panel.querySelector("form")?.addEventListener("submit", (event) => event.preventDefault());
     panel.addEventListener("click", handlePanelClick);
     panel.addEventListener("input", handlePanelInput);
     document.body.append(panel);
@@ -168,7 +192,7 @@
     panel.querySelector("#pomodoroTimeText").textContent = formatTime(remaining);
     panel.querySelector("#pomodoroStatusText").textContent = {
       idle: "未开始",
-      running: `${modeLabel()}中 · 学习模式已启用`,
+      running: `${modeLabel()}中`,
       paused: "已暂停"
     }[state.status] || "未开始";
     panel.querySelector("#pomodoroProgressBar").style.width = `${percent}%`;
@@ -186,7 +210,7 @@
     const seconds = stageSeconds(mode);
     setState({ mode, status: "running", remainingSeconds: seconds, endAt: Date.now() + seconds * 1000 });
     ensureTicker();
-    notify("info", mode === "focus" ? "学习模式开始：专注时我会少打扰你。" : "休息开始：离开屏幕、喝水、活动一下。");
+    notify("info", mode === "focus" ? "专注开始：我会少打扰你。" : "休息开始：离开屏幕、喝水、活动一下。");
   }
 
   function startFocus() {
@@ -210,9 +234,12 @@
     ensureTicker();
   }
 
-  function stopTimer({ silent = false } = {}) {
+  function stopTimer({ silent = false, interrupted = false } = {}) {
+    const shouldReportInterrupted = interrupted && state.mode === "focus" && state.status !== "idle";
+    const minutes = state.focusMinutes;
     setState({ status: "idle", mode: "focus", remainingSeconds: state.focusMinutes * 60, endAt: 0 });
-    if (!silent) notify("info", "番茄钟已停止。学习模式已退出。");
+    if (!silent) notify("info", "Pomodoro stopped.");
+    if (shouldReportInterrupted) reportPomodoroOutcome("interrupted", minutes);
   }
 
   async function finishStage() {
@@ -221,8 +248,9 @@
       const completedFocusCount = Number(state.completedFocusCount || 0) + 1;
       setState({ completedFocusCount, lastCompletedAt: new Date().toISOString() });
       await track("focus_done", { minutes });
-      notify("success", `完成 ${minutes} 分钟专注。休息时间到了。`);
+      notify("success", `Completed ${minutes} minutes. Break time.`);
       startStage("break");
+      reportPomodoroOutcome("completed", minutes);
       return;
     }
     notify("success", "休息结束。准备进入下一轮专注。");
@@ -231,7 +259,14 @@
 
   function skipStage() {
     if (state.status === "idle") return;
-    finishStage().catch((error) => window.tablePetNotify?.capture?.(error, "跳过番茄钟失败"));
+    if (state.mode === "focus") {
+      const minutes = state.focusMinutes;
+      setState({ mode: "break", status: "idle", remainingSeconds: state.breakMinutes * 60, endAt: 0 });
+      notify("warning", "Focus round skipped.");
+      reportPomodoroOutcome("interrupted", minutes);
+      return;
+    }
+    finishStage().catch((error) => window.tablePetNotify?.capture?.(error, "Pomodoro skip failed"));
   }
 
   function ensureTicker() {
@@ -263,16 +298,15 @@
     const actionButton = event.target.closest("button[data-pomodoro-action]");
     if (!actionButton) return;
     const action = actionButton.dataset.pomodoroAction;
+    if (action === "collapse") {
+      panel.hidden = true;
+      return;
+    }
     if (action === "start") startFocus();
     if (action === "pause") pauseTimer();
     if (action === "resume") resumeTimer();
     if (action === "skip") skipStage();
-    if (action === "stop") stopTimer();
-    if (action === "focus-costume") {
-      window.dispatchEvent(new CustomEvent("tablepet:pomodoro-state", { detail: { mode: "focus", status: "running", preview: true } }));
-      notify("info", "已预览学习模式立绘。可在设置图片里给“学习专注 / 学习休息”导入专用图片。", { timeout: 5200 });
-      window.setTimeout(dispatchPomodoroState, 2200);
-    }
+    if (action === "stop") stopTimer({ interrupted: true });
   }
 
   function handlePanelInput(event) {
@@ -285,8 +319,11 @@
 
   function openPanel() {
     ensurePanel();
+    panel.hidden = false;
+    panel.classList.remove("is-collapsed");
     renderPanel();
-    panel.showModal();
+    panel.classList.add("is-attention");
+    window.setTimeout(() => panel?.classList.remove("is-attention"), 520);
   }
 
   function install() {

@@ -12,6 +12,12 @@ contextBridge.exposeInMainWorld("tablePet", {
   invokeTool: (name, args) => ipcRenderer.invoke("tools:invoke", name, args || {}),
   getSchedule: () => ipcRenderer.invoke("schedule:get"),
   resetSchedule: () => ipcRenderer.invoke("schedule:reset"),
+  handlePomodoroOutcome: (payload) => ipcRenderer.invoke("pomodoro:outcome", payload || {}),
+  onPomodoroOutcome: (callback) => {
+    const listener = (_event, result) => callback(result || {});
+    ipcRenderer.on("pomodoro:outcomeResult", listener);
+    return () => ipcRenderer.removeListener("pomodoro:outcomeResult", listener);
+  },
   getMemory: () => ipcRenderer.invoke("memory:get"),
   searchMemory: (query) => ipcRenderer.invoke("memory:search", query),
   addMemory: (payload) => ipcRenderer.invoke("memory:add", payload),

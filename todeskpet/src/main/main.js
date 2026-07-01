@@ -336,8 +336,6 @@ const EXTRA_INTERACTION_PORTRAIT_OPTIONS = [
   { key: "chat", label: "聊天中" },
   { key: "thinking", label: "思考中" },
   { key: "speaking", label: "说话中" },
-  { key: "studyFocus", label: "学习专注" },
-  { key: "studyBreak", label: "学习休息" },
   { key: "sleep", label: "睡觉空闲" }
 ];
 const ALL_INTERACTION_PORTRAIT_OPTIONS = [
@@ -957,6 +955,115 @@ function updateMoodFromConversation({ emotion, message, screenContext, assistant
   });
 }
 
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function normalizePomodoroMoodLedger(value = {}) {
+  const today = localDateKey();
+  const date = String(value.date || today);
+  return {
+    date,
+    used: date === today ? Math.min(5, Math.max(0, Math.round(Number(value.used || 0)))) : 0
+  };
+}
+
+function pomodoroFallbackComment(outcome, delta, limited) {
+  if (limited) return "[Emotion: Neutral]\n今天番茄钟对心情的影响已经到上限了，不过这次记录我收下了。";
+  if (outcome === "completed" && delta > 0) {
+    return "[Emotion: Happy]\n这轮专注完成得很漂亮，心情也跟着亮了一点。";
+  }
+  return "[Emotion: Encouraging]\n这轮先中断也没关系，缓一下，下一轮从更小的一步开始。";
+}
+
+async function pomodoroOutcomeComment({ outcome, minutes, delta, limited, moodScore }) {
+  const settings = readSettings();
+  const provider = PROVIDERS[settings.provider] || PROVIDERS.deepseek;
+  if (!process.env[provider.apiKeyEnv]) return pomodoroFallbackComment(outcome, delta, limited);
+
+  const actionText = outcome === "completed" ? "完成了一轮番茄钟" : "中断了一轮番茄钟";
+  const messages = [
+    {
+      role: "system",
+      content: [
+        "你是桌面精灵，需要给用户一句很短的番茄钟反馈。",
+        "语气自然、像陪伴者，不要说教。",
+        "必须以这些标签之一开头：[Emotion: Neutral]、[Emotion: Happy]、[Emotion: Thinking]、[Emotion: Confused]、[Emotion: Encouraging]。",
+        "只输出一句中文评语，正文不超过 36 个汉字。"
+      ].join("\n")
+    },
+    {
+      role: "user",
+      content: JSON.stringify({
+        event: actionText,
+        minutes,
+        moodDelta: delta,
+        dailyMoodLimitReached: limited,
+        currentMoodScore: moodScore
+      })
+    }
+  ];
+
+  try {
+    const text = await Promise.race([
+      callOpenAICompatibleRaw(messages, { temperature: 0.7, maxTokens: 120 }),
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Pomodoro comment timeout")), 8000);
+      })
+    ]);
+    const normalized = normalizeAssistantText(text).text;
+    const visibleText = normalized.replace(/^\[Emotion:\s*(Neutral|Happy|Thinking|Confused|Encouraging)\]\s*/i, "").trim();
+    return visibleText ? normalized : pomodoroFallbackComment(outcome, delta, limited);
+  } catch (error) {
+    console.warn("Pomodoro comment failed:", error.message || error);
+    return pomodoroFallbackComment(outcome, delta, limited);
+  }
+}
+
+async function handlePomodoroOutcome(payload = {}) {
+  const outcome = payload.outcome === "completed" ? "completed" : "interrupted";
+  const requestedDelta = outcome === "completed" ? 1 : -1;
+  const currentSettings = readSettings();
+  const ledger = normalizePomodoroMoodLedger(currentSettings.pomodoroMoodLedger);
+  const canAffectMood = ledger.used < 5;
+  const delta = canAffectMood ? requestedDelta : 0;
+  const nextScore = clampMoodScore(Number(currentSettings.moodScore || DEFAULT_SETTINGS.moodScore) + delta);
+
+  const saved = writeSettings({
+    ...currentSettings,
+    moodScore: nextScore,
+    pomodoroMoodLedger: {
+      date: localDateKey(),
+      used: ledger.used + Math.abs(delta)
+    }
+  });
+
+  const comment = await pomodoroOutcomeComment({
+    outcome,
+    minutes: Number(payload.minutes || 0),
+    delta,
+    limited: !canAffectMood,
+    moodScore: saved.moodScore
+  });
+
+  return {
+    ok: true,
+    id: `pomodoro-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    outcome,
+    delta,
+    dailyUsed: normalizePomodoroMoodLedger(saved.pomodoroMoodLedger).used,
+    dailyLimit: 5,
+    limited: !canAffectMood,
+    comment,
+    moodScore: saved.moodScore,
+    mood: moodFromScore(saved.moodScore),
+    moodLabel: MOOD_LABELS[moodFromScore(saved.moodScore)]
+  };
+}
+
 function readSettings() {
   migrateLegacyData();
 
@@ -1199,7 +1306,10 @@ function writeSettings(nextSettings) {
     siliconflowTtsSpeed: Number(currentSettings.siliconflowTtsSpeed || DEFAULT_SETTINGS.siliconflowTtsSpeed),
     siliconflowTtsSampleRate: Number(
       currentSettings.siliconflowTtsSampleRate || DEFAULT_SETTINGS.siliconflowTtsSampleRate
-    )
+    ),
+    pomodoroMoodLedger: Object.prototype.hasOwnProperty.call(nextSettings, "pomodoroMoodLedger")
+      ? normalizePomodoroMoodLedger(nextSettings.pomodoroMoodLedger)
+      : normalizePomodoroMoodLedger(currentSettings.pomodoroMoodLedger)
   };
 
   fs.mkdirSync(path.dirname(getSettingsPath()), { recursive: true });
@@ -2629,6 +2739,11 @@ ipcMain.handle("schedule:get", () => getAiScheduleSnapshot());
 ipcMain.handle("schedule:reset", () => {
   const settings = readSettings();
   return getAiScheduleSnapshot(writeSettings({ ...settings, aiScheduleItems: DEFAULT_SETTINGS.aiScheduleItems }));
+});
+ipcMain.handle("pomodoro:outcome", async (event, payload) => {
+  const result = await handlePomodoroOutcome(payload || {});
+  event.sender.send("pomodoro:outcomeResult", result);
+  return result;
 });
 ipcMain.handle("settings:save", (_event, nextSettings) => {
   if (ttsQueue) ttsQueue.clear();

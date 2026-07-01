@@ -845,7 +845,7 @@ portrait.addEventListener("click", (event) => {
 
 document.addEventListener("click", (event) => {
   if (!chatVisible || settingsDialog.open) return;
-  const interactiveArea = event.target.closest(".titlebar, .bubble, .composer, .portrait, dialog");
+  const interactiveArea = event.target.closest(".titlebar, .bubble, .composer, .portrait, .pet-context-menu, dialog");
   if (!interactiveArea) setChatVisible(false);
 });
 
@@ -921,6 +921,24 @@ loadSettings()
   });
 applyChatVisibility(false);
 window.tablePet.onChatVisibilityChanged((visible) => applyChatVisibility(visible));
+const pomodoroOutcomeIds = new Set();
+
+function showPomodoroOutcome(result = {}) {
+  if (result.id && pomodoroOutcomeIds.has(result.id)) return;
+  if (result.id) {
+    pomodoroOutcomeIds.add(result.id);
+    if (pomodoroOutcomeIds.size > 20) {
+      pomodoroOutcomeIds.delete(pomodoroOutcomeIds.values().next().value);
+    }
+  }
+  if (result.mood) setMood(result.mood, result.moodScore, result.moodLabel);
+  if (result.comment) showReply(result.comment);
+  if (!chatVisible) setChatVisible(true).catch(() => undefined);
+}
+
+window.__tablePetShowPomodoroOutcome = showPomodoroOutcome;
+window.tablePet.onPomodoroOutcome?.((result) => showPomodoroOutcome(result));
+window.addEventListener("tablepet:pomodoro-outcome", (event) => showPomodoroOutcome(event.detail || {}));
 setReplayAvailable(false);
 
 // Initialize global click ripple feedback
